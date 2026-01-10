@@ -87,8 +87,26 @@ const items = [
   {
     title: "Supplier Management",
     url: "/admin/vendors",
-    icon: FaUsersLine
+    icon: FaUsersLine,
+    subitems: [
+      {
+        title :"Purchase Order",
+        url: "/admin/purchase",
+        icon: FaReceipt,
+      },
+      {
+        title :"Ledger",
+        url: "/admin/ledger",
+        icon: FaUsers,
+      },
+      {
+        title :"Vendors",
+        url: "/admin/vendors",
+        icon: FaCubesStacked,
+      }
+    ]
   }
+
 ];
 
 export function AppSideBar() {

@@ -82,7 +82,7 @@ export default function DisplayVendors({
           const v = vendor as Vendors;
           return(
             <div>
-              <Link href={`/admin/vendors/components/vendordetails/${v.vendor_id}`}>
+              <Link href={`/admin/vendors/${v.vendor_id}`}>
               {view}
               </Link>
             </div>

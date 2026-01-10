@@ -8,6 +8,7 @@ import ExpiryStockPanel from "@/app/components/chart/expirystock";
 import { useQuery } from "@tanstack/react-query";
 import { getExpiredBatches } from "@/app/functions/admin/stock/expiry/expiry";
 import { useRouter } from "next/navigation";
+import { questionMark } from "@/app/components/ui";
 
 export default function StockPage() {
   const router = useRouter();
@@ -58,7 +59,13 @@ export default function StockPage() {
         <IssuedStockPanel />
         <ExpiryStockPanel />
       </div>
-
+      <div className="text-lg text-red bg-transparent">
+        
+        <button
+        onClick={() => router.push("/admin/stock/components/expirypanel")}>
+          {questionMark}
+        </button>
+      </div>
       <ProductList
         refreshKey={refreshKeys}
         onDataLoaded={registerSearch} />

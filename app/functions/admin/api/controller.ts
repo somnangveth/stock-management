@@ -133,7 +133,7 @@ export async function fetchSaleItems(){
 
 //Fetch Discounts
 export async function fetchDiscount(){
-    const res = await fetch("/api/admin/fetchdiscount");
+    const res = await fetch("/api/admin/fetchdiscounts");
     if(!res.ok){
         console.error("Failed to fetch discounts data");
     }
@@ -181,5 +181,46 @@ export async function fetchStockMovement(){
         console.error("Failed to fetch stock movement data");
     }
 
+    return res.json();
+}
+
+
+//Fetch Ledger
+export async function fetchLedger(){
+    const res = await fetch('/api/admin/fetchledger');
+    if(!res.ok){
+        console.error("Failed to fetch Ledger data");
+        throw new Error("Failed to fetch");
+    }
+    return res.json();
+}
+
+// //Fetch Ledger Alert
+// export async function fetchLedgerAlert(){
+//     const res = await fetch('/api/admin/fetchledgeralert');
+//     if(!res.ok){
+//         console.error("Failed to fetch Ledger Alert data");
+//         throw new Error("Failed to fetch");
+//     }
+//     return res.json();
+// }
+
+//Fetch purchase orders
+export async function fetchPurchaseOrders(){
+    const res = await fetch('/api/admin/fetchpurchaseorders');
+    if(!res.ok){
+        console.error("Failed to fetch Purchase Orders data");
+        throw new Error("Failed to fetch");
+    }
+    return res.json();
+}
+
+//Fetch return orders
+export async function fetchReceiveOrders(){
+    const res = await fetch('/api/admin/fetchreceiveorders');
+    if(!res.ok){
+        console.error("Failed to fetch Receive Orders data");
+        throw new Error("Failed to fetch");
+    }
     return res.json();
 }

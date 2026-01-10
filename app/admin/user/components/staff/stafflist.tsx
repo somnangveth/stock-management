@@ -3,7 +3,7 @@ import { Staff } from "@/type/membertype";
 import MemberTable from "@/app/components/tables/membertable";
 import EditStaff from "./editstaff";
 import Link from "next/link";
-import { view } from "@/app/components/ui";
+import { EditIconBtn, view } from "@/app/components/ui";
 
 interface StaffListProps {
   data: Staff[]; // always receive data from parent
@@ -28,8 +28,9 @@ export default function StaffList({ data }: StaffListProps) {
           const s = staff as Staff;
           return (
             <div className="flex items-center gap-2">
-              <EditStaff staff={s} />
-              <Link href={`/admin/user/components/staff/staffdetail/${s.staff_id}`}>
+              <Link
+              className={EditIconBtn} 
+              href={`/admin/user/components/staff/staffdetail/${s.staff_id}`}>
                 {view}
               </Link>
             </div>

@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PriceProductProps } from "./updateform";
 import { Price } from "@/type/producttype";
+import { SubmitBtnFull } from "@/app/components/ui";
 
 
 const UpdateSchema = z.object({
@@ -190,7 +191,7 @@ export default function UpdateSinglePriceB2C({priceData}: {priceData: Price}){
                     <Button 
                         type="submit" 
                         disabled={isPending}
-                        className="w-full"
+                        className={SubmitBtnFull}
                     >
                         {isPending ? "Updating..." : "Update Price"}
                     </Button>

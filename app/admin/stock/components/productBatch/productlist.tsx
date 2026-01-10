@@ -4,7 +4,7 @@ import { Product } from "@/type/producttype";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useQueries } from "@tanstack/react-query";
 import AddFormBatch from "./addformbatch";
-import { view } from "@/app/components/ui";
+import { EditIconBtn, view } from "@/app/components/ui";
 import Link from "next/link";
 import { fetchCategoryAndSubcategory, fetchStockAlert } from "@/app/functions/admin/api/controller";
 
@@ -151,7 +151,9 @@ export default function ProductList({
           return (
             <div className="flex items-center gap-2">
               <AddFormBatch product={p} />
-              <Link href={`/admin/stock/components/batchdetail/${p.product_id}`}>
+              <Link 
+              className={EditIconBtn}
+              href={`/admin/stock/components/batchdetail/${p.product_id}`}>
                 {view}
               </Link>
             </div>

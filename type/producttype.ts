@@ -20,6 +20,7 @@ export type Vendors = {
 
 // Base Product Type (matches your API response)
 export type Product = {
+  unit_price: number;
   product_id: string;
   sku_code: string;
   product_name: string;            
@@ -204,3 +205,123 @@ export type StockAlert = {
   max_stock_level: number;
   current_quantity: number;
 };
+
+
+
+// types/purchase.ts
+export type PurchaseStatus = "draft" | "submitted" | "confirmed" | "received" | "completed" | "cancelled";
+
+export type PurchaseItem = {
+  purchase_item_id: string;
+  product_id: string;
+  product_name: string;
+  sku_code: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+  expiry_date?: string;
+  batch_number?: string;
+  warehouse_location?: string;
+  received_quantity: number;
+  batch_id?: string;
+  product_image?: string;
+};
+
+export type PurchaseOrderDetail = {
+  purchase_id: string;
+  po_number: string;
+  vendor_id: number;
+  vendor_name: string;
+  purchase_date: string;
+  expected_delivery_date?: string;
+  actual_delivery_date?: string;
+  payment_terms?: string;
+  note?: string;
+  subtotal: number;
+  tax: number;
+  total_amount: number;
+  status: PurchaseStatus;
+  created_at?: string;
+  updated_at?: string;
+  purchase_items: PurchaseItem[];
+  vendor_image?: string;
+};
+
+export type PurchaseOrder = {
+  [x: string]: any;
+  purchase_id: string;
+  po_number: string;
+  vendor_id: number;
+  vendor_name: string;
+  total_amount: number;
+  status: PurchaseStatus;
+  purchase_date: string;
+  expected_delivery_date?: string;
+  actual_delivery_date?: string;
+  item_count: number;
+  received_items_count: number;
+  items?: PurchaseItem[];
+};
+
+export type CreatePurchaseOrderInput = {
+  vendor_id: number;
+  purchase_date: string;
+  expected_delivery_date?: string;
+  payment_terms: string;
+  PurchaseStatus: PurchaseStatus;
+  note: string;
+  subtotal: number;
+  tax: number;
+  total_amount: number;
+  items: Array<{
+    product_id: string;
+    quantity: number;
+    unit_price: number;
+    expiry_date?: string;
+    batch_number?: string;
+    warehouse_location?: string;
+  }>;
+};
+
+export type UpdatePurchaseOrderInput = {
+  
+  expected_delivery_date?: string;
+  payment_terms?: string;
+  PurchaseStatus?: PurchaseStatus;
+  note?: string;
+};
+
+export type ServerResponse<T> = {
+  data: T | null;
+  error: string | null;
+};
+
+export type POReceiveModalProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  poNumber: string;
+  items: PurchaseItem[];
+  onReceive: (receivedData: Record<string, number>) => Promise<void>;
+  isLoading?: boolean;
+}
+
+
+export interface VendorProduct {
+  product_id: number;
+  product_name: string;
+  sku_code: string;
+  description: string;
+  vendor_id: number;
+  unit_price: number;
+  product_image: string | null;
+  quantity_remaining: number;
+  category_id: number | null;
+  subcategory_id: number | null;
+  min_stock_level: number;
+  reorder_point: number;
+  created_at: string;
+  updated_at: string;
+  is_active: boolean;
+  barcode: string | null;
+  basePrice: number;
+}

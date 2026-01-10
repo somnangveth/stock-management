@@ -14,6 +14,9 @@ import UpdatePriceFormB2B from "@/app/admin/price/components/b2b/updatepriceform
 import UpdatePriceFormB2C from "@/app/admin/price/components/b2c/updateform";
 import UpdateForm from "@/app/admin/products/components/product/updateform";
 import UpdateAttributeForm from "@/app/admin/products/components/attribute/updateattributeform";
+import { ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
+import DeleteProduct from "@/app/admin/products/components/product/deleteproduct";
 
 type Props = {
   product: Product;
@@ -47,11 +50,21 @@ export default function ProductDetailCatalog({
     .toISOString()
     .split("T")[0];
 
+    const router = useRouter();
+
   return (
+    <>
     <div className="w-full h-[calc(100vh-80px)] flex flex-col lg:flex-row gap-6">
       {/* Left Panel */}
       <div className="lg:w-1/3 xl:w-1/4">
+      <button
+    className="flex items-center gap-2 text-sm text-gray-500"
+    onClick={() => router.back()}>
+      <ArrowLeft/>
+      Back
+    </button>
         <div className="sticky top-6 bg-white rounded-lg shadow-sm p-4">
+          
           <div className="bg-gray-50 rounded-lg overflow-hidden flex items-center justify-center">
             <Image
               src={product.product_image || "/assets/product_default.jpg"}
@@ -80,8 +93,7 @@ export default function ProductDetailCatalog({
           <h2 className="text-lg font-semibold border-b pb-2">
             Basic Information
           </h2>
-
-          <UpdateForm
+            <UpdateForm
             product={product}
             categories={categories}
             subcategories={subcategories}
@@ -104,7 +116,8 @@ export default function ProductDetailCatalog({
             Attributes
           </h2>
 
-          <UpdateAttributeForm attributes={attribute}/>
+            <UpdateAttributeForm attributes={attribute}/>
+
           {attribute.length > 0 ? (
             attribute.map((a) => (
               <InfoRow
@@ -127,21 +140,43 @@ export default function ProductDetailCatalog({
           {price.total_amount && (
             <>
               <p className="font-semibold">General Customer</p>
-              <UpdatePriceFormB2C priceData={price} />
+                <UpdatePriceFormB2C priceData={price} />
               <InfoRow label="Sale Price" value={String(price.total_amount)} />
+            </>
+          )}
+
+          {price.discount ? (
+            <>
+              <InfoRow label="Sale Price" value={String(price.discount)} />
+            </>
+          ):(
+            <>
+              <InfoRow label="Discount" value="0" />
             </>
           )}
 
           {price.b2b_price && (
             <>
               <p className="font-semibold">Dealer</p>
-              <UpdatePriceFormB2B priceData={price} />
+                <UpdatePriceFormB2B priceData={price} />
               <InfoRow label="Sale Price" value={String(price.b2b_price)} />
             </>
           )}
+
+          {price.discount ? (
+            <>
+              <InfoRow label="Sale Price" value={String(price.discount)} />
+            </>
+          ):(
+            <>
+              <InfoRow label="Discount" value="0" />
+            </>
+          )}
+
         </section>
       </div>
     </div>
+    </>
   );
 }
 

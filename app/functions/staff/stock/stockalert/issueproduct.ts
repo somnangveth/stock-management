@@ -1,6 +1,6 @@
 "use server";
 
-import { createSupabaseAdmin, createSupabaseServerClient } from "@/lib/supbase/action";
+import { createSupabaseAdmin } from "@/lib/supbase/action";
 
 export async function addIssueProduct(
   batch_id: string,
@@ -13,7 +13,7 @@ export async function addIssueProduct(
     notes: string;
   }
 ) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdmin();
 
   // 1️. Get current stock
   const { data: stock, error: stockError } = await supabase
@@ -67,7 +67,7 @@ export async function addIssueProduct(
 
 //Fetch Stock Movement Table
 export async function fetchStockMovement(){
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseAdmin();
 
     const {data: stockMovementData, error: stockMovementError} = await supabase
     .from("stock_movement")

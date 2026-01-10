@@ -2,24 +2,21 @@
 
 import { createSupabaseAdmin } from "@/lib/supbase/action";
 
-export async function addDealer(
-    data: {
-        business_name: string;
-        dealer_name: string;
-        nationalId : string;
-        passportNumber: string;
-        contact_number: string;
-        email_address: string;
-        shop_address: string;
-        delivery_address: string;
-        businesstype: "retail" | "wholesale" | "mixed" | "online";
-    }
-){
+export async function addDealer(data: {
+    business_name: string;
+    dealer_name: string;
+    nationalId: string;
+    passportNumber: string;
+    contact_number: string;
+    email_address: string;
+    shop_address: string;
+    delivery_address: string;
+    businesstype: "retail" | "wholesale" | "mixed" | "online";
+}) {
     const supabase = await createSupabaseAdmin();
 
-    try{
-        const {data: dealerData, error: dealerError} = await supabase
-        .from('dealer')
+    const { data: dealer, error } = await supabase
+        .from("dealer")
         .insert({
             business_name: data.business_name,
             dealer_name: data.dealer_name,
@@ -30,16 +27,16 @@ export async function addDealer(
             shop_address: data.shop_address,
             delivery_address: data.delivery_address,
             businesstype: data.businesstype,
-        });
+        })
+        .select()
+        .single(); // 👈 IMPORTANT
 
-        if(dealerError){
-            console.error("Failed to insert dealer data", dealerError);
-        }
-
-        return dealerData;
-    }catch(error){
-        throw error;
+    if (error) {
+        console.error("Failed to insert dealer:", error);
+        throw new Error(error.message);
     }
+
+    return dealer;
 }
 
 

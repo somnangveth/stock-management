@@ -1,6 +1,6 @@
 "use server";
 
-import {createSupabaseServerClient} from "@/lib/supbase/action";
+import {createSupabaseAdmin} from "@/lib/supbase/action";
 
 export type AddSalesDataB2B = {
     dealer_id: string;
@@ -47,7 +47,7 @@ export type AddSalesDataB2C = {
 
 // Add Sales for B2B with Package-based Operations
 export async function addSalesB2B(data: AddSalesDataB2B){
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseAdmin();
 
     try{
         // Validate required fields
@@ -307,7 +307,7 @@ export async function addSalesB2B(data: AddSalesDataB2B){
 
 //Add Sales for B2C
 export async function addSalesB2C(data: AddSalesDataB2C){
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseAdmin();
 
     try{
         //Validate required fields
@@ -518,7 +518,7 @@ export async function addSalesB2C(data: AddSalesDataB2C){
 
 //Fetch All Sales
 export async function fetchSales(){
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseAdmin();
 
     try{
         const {data: salesData, error: salesError} = await supabase
@@ -537,7 +537,7 @@ export async function fetchSales(){
 
 //Fetch All Sale Item
 export async function fetchSaleItems(){
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseAdmin();
 
     try{
         const {data: saleItemData, error: saleItemError} = await supabase
@@ -559,7 +559,7 @@ export async function updateProcessStatus(
   sale_id: string,
   process_status: string,
 ) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdmin();
 
   const { data, error } = await supabase
     .from("sale")

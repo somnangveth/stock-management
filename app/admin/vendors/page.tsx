@@ -1,10 +1,11 @@
 "use client";
 
-import { Vendors } from "@/type/producttype";
 import DisplayVendors from "./components/displayvendors";
 import VendorForm from "./components/vendorform";
 import { useCallback, useState } from "react";
 import SearchBar from "@/app/components/searchbar";
+import { Vendors } from "@/type/producttype";
+
 
 export default function VendorPage(){
     const [refreshKeys, setRefreshKey] = useState(0);

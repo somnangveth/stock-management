@@ -1,6 +1,6 @@
 "use server";
 
-import { createSupabaseServerClient } from "@/lib/supbase/action";
+import { createSupabaseAdmin } from "@/lib/supbase/action";
 
 
 export async function addPrice(data: {
@@ -12,7 +12,7 @@ export async function addPrice(data: {
   shipping: number;
   discount: number;
 }) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdmin();
 
   try {
     console.log("Price Insert Payload:", data);
@@ -58,7 +58,7 @@ export async function updatePriceB2C(
     discount: number;
   }>
 ){
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdmin();
 
   try{
     console.log("Updating Price...");
@@ -97,7 +97,7 @@ export async function updatePriceB2C(
     shipping: number;
   }>
   ){
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdmin();
 
   try{
     console.log("Updating Price...");
@@ -136,7 +136,7 @@ export async function updateMultiplePrices(
     shipping: number;
   }>>
 ){
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdmin();
 
   try{
 
@@ -173,7 +173,7 @@ export async function updateMultiplePrices(
 
 //Fetch Price for B2C (Buyer to Customer)
 export async function fetchPricesB2C(){
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdmin();
 
   const {data: priceData, error: priceError} = await supabase
   .from("prices")
@@ -190,7 +190,7 @@ export async function fetchPricesB2C(){
 
 //Fetch Price for B2B(Buyer to Buyer)
 export async function fetchPricesB2B(){
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdmin();
 
   const {data: priceData, error: priceError} = await supabase
   .from("prices")

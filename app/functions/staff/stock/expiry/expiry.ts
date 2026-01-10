@@ -1,11 +1,11 @@
 "use server";
 
-import { createSupabaseAdmin, createSupabaseServerClient } from "@/lib/supbase/action";
+import { createSupabaseAdmin } from "@/lib/supbase/action";
 
 //Fetch Expired Batches
 export async function getExpiredBatches(){
 
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseAdmin();
 
     const {data, error} = await supabase
     .from("expiry_alert")
@@ -34,7 +34,7 @@ export async function disposeExpiredBatches(
   cost_loss: number;
   reason: string;
 }) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdmin();
   
   try {
     console.log("Starting disposal process with data:", data);
@@ -97,7 +97,7 @@ export async function disposeExpiredBatches(
 
 // Fetch all disposed products
 export async function fetchDisposedProducts() {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdmin();
   
   try {
     const { data, error } = await supabase
@@ -129,7 +129,7 @@ export async function fetchDisposedProductsByDateRange(
   startDate: Date,
   endDate: Date
 ) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdmin();
   
   try {
     const { data, error } = await supabase
@@ -161,7 +161,7 @@ export async function fetchDisposedProductsByDateRange(
 export async function fetchDisposedProductsByMethod(
   method: "trash" | "return_supplier" | "donation" | "other"
 ) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdmin();
   
   try {
     const { data, error } = await supabase
@@ -190,7 +190,7 @@ export async function fetchDisposedProductsByMethod(
 
 // Get disposal statistics
 export async function getDisposalStatistics() {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdmin();
   
   try {
     const { data, error } = await supabase

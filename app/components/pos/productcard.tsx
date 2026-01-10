@@ -3,63 +3,81 @@
 import { Categories, Product, Subcategories } from "@/type/producttype";
 import { circleCross, faMinusCircle, faPlusCircle, trash } from "../ui";
 
-// Product Card
 export function ProductCard({
-    product, 
-    onAddToCart
+    product,
+    onAddToCart,
 }: {
-    product: Product, 
-    onAddToCart: (product: Product) => void
+    product: Product;
+    onAddToCart: (product: Product) => void;
 }) {
     return (
         <button
-            onClick={() => onAddToCart(product)} 
-            className="relative flex flex-col space-y-2 border border-gray-500 p-2 bg-white shadow-md hover:bg-gray-200 transition rounded-lg overflow-hidden"
+            onClick={() => onAddToCart(product)}
+            className="relative w-full flex flex-col 
+                       border border-gray-200 rounded-xl 
+                       bg-white shadow-sm hover:shadow-md 
+                       hover:bg-gray-50 transition overflow-hidden"
         >
-            {/* Diagonal Discount Badge */}
+            {/* Discount Badge */}
             {product.discount_price && (
-                <div className="absolute top-0 right-0 z-10">
-                    <div className="bg-red-600 text-white text-xs font-bold px-8 py-1 transform rotate-45 translate-x-6 -translate-y-5 shadow-md">
-                        {String(product.discount_percent)}%
+                <span className="absolute top-2 right-2 
+                                 bg-red-600 text-white 
+                                 text-[10px] font-bold 
+                                 px-2 py-0.5 rounded-full z-10">
+                    -{product.discount_percent}%
+                </span>
+            )}
+
+            {/* Image */}
+            <img
+                src={product.product_image || "/assets/product_default.jpg"}
+                alt={product.product_name}
+                className="w-full h-32 object-cover"
+            />
+
+            {/* Content */}
+            <div className="p-3">
+                <div className="flex justify-between items-start gap-3">
+                    
+                    {/* LEFT PANEL */}
+                    <div className="flex flex-col min-w-0">
+                        <p className="text-sm font-semibold truncate">
+                            {product.product_name}
+                        </p>
+                        <span className="text-xs text-gray-500">
+                            Qty: {product.current_quantity}
+                        </span>
                     </div>
+
+                    {/* RIGHT PANEL */}
+                    <div className="flex flex-col items-end shrink-0">
+                        <span className="text-xs text-gray-500">
+                            Pkg: {product.package_qty}
+                        </span>
+
+                        {product.discount_price ? (
+                            <>
+                                <span className="text-sm font-semibold text-green-600">
+                                    ${product.discount_price}
+                                </span>
+                                <span className="text-[11px] text-gray-400 line-through">
+                                    ${product.total_price}
+                                </span>
+                            </>
+                        ) : (
+                            <span className="text-sm font-semibold text-green-600">
+                                ${product.total_price}
+                            </span>
+                        )}
+                    </div>
+
                 </div>
-            )}
-            
-            {product.product_image ? (
-                <img 
-                    src={product.product_image} 
-                    alt={product.product_name} 
-                    className="w-full h-32 object-cover rounded"
-                />
-            ) : (
-                <img 
-                    src="/assets/product_default.jpg" 
-                    alt="no image" 
-                    className="w-full h-32 object-cover rounded"
-                />
-            )}
-            
-            <div className="flex justify-between items-center">
-                <div className="truncate max-w-[120px] text-sm">{product.product_name}</div>
-                <div>
-                    {product.discount_price ? (
-                        <div className="flex flex-col items-end">
-                            <span className="font-semibold text-green-600">${String(product.discount_price)}</span>
-                            <span className="text-xs text-gray-500 line-through">${String(product.total_price)}</span>
-                        </div>
-                    ) : (
-                        <span className="font-semibold text-green-600">${String(product.total_price)}</span>
-                    )}
-                </div>
-            </div>
-            
-            <div className="flex justify-between">
-                <p className="text-xs">Qty: {product.current_quantity}</p>
-                <p className="text-xs">Pkg: {product.package_qty}</p>
             </div>
         </button>
     );
 }
+
+
 
 interface ProductOrderCardProps{
     product: Product;

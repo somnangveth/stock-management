@@ -1,6 +1,6 @@
 "use server";
 
-import { createSupabaseAdmin, createSupabaseServerClient } from "@/lib/supbase/action";
+import { createSupabaseAdmin } from "@/lib/supbase/action";
 
 //Update Min Stock And Max Stock
 export async function updateMinMaxStock(
@@ -11,7 +11,7 @@ export async function updateMinMaxStock(
         max_stock_level: number;
     }>
 ){
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseAdmin();
 
     try{
         const {data: minMaxProductData, error: minMaxProductError} = await supabase
@@ -51,7 +51,7 @@ export async function updateMinMaxStock(
 }
 //Fetch Stock Alert Table
 export async function fetchStockAlert(){
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseAdmin();
     
     try{
         const {data: stockAlertData, error: stockAlertError} = await supabase

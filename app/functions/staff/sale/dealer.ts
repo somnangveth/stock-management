@@ -1,6 +1,5 @@
 "use server";
-
-import { createSupabaseAdmin, createSupabaseServerClient } from "@/lib/supbase/action";
+import { createSupabaseAdmin } from "@/lib/supbase/action";
 
 export async function addDealer(
     data: {
@@ -15,7 +14,7 @@ export async function addDealer(
         businesstype: "retail" | "wholesale" | "mixed" | "online";
     }
 ){
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseAdmin();
 
     try{
         const {data: dealerData, error: dealerError} = await supabase
@@ -59,7 +58,7 @@ export async function updateDealer(
         businesstype: "retail" | "wholesale" | "mixed" | "online";
     }>
 ){
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseAdmin();
 
     try{
         const {data: dealerData, error: dealerError} = await supabase
@@ -91,7 +90,7 @@ export async function updateDealer(
 
 //Delete Dealer
 export async function deleteDealer(dealer_id: string){
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseAdmin();
 
     try{
         const {data: dealerData, error: dealerError} = await supabase
@@ -111,7 +110,7 @@ export async function deleteDealer(dealer_id: string){
 
 //Fetch Dealer Data
 export async function fetchDealers(){
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseAdmin();
 
     const {data: dealerData, error: dealerError} = await supabase
     .from("dealer")

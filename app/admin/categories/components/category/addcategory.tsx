@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { cn } from "@/lib/utils";
 import { btnStyle } from "@/app/components/ui";
+import { Input } from "@/components/ui/input";
 
 // ---------------------
 // Zod Schema
@@ -69,7 +70,7 @@ export default function AddCategory() {
             <FormItem>
               <FormLabel>Category Name</FormLabel>
               <FormControl>
-                <input
+                <Input
                   type="text"
                   {...field}
                   onChange={(e) => field.onChange(e.target.value)}
@@ -86,7 +87,7 @@ export default function AddCategory() {
             <FormItem>
               <FormLabel>Slug</FormLabel>
               <FormControl>
-                <input
+                <Input
                   type="text"
                   {...field}
                   onChange={(e) => field.onChange(e.target.value)}

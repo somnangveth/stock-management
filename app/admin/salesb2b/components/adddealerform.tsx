@@ -9,7 +9,7 @@ export default function AddDealerForm(){
 
     return(
         <Button
-        onClick={() => router.push('/admin/salesb2b/components/addDealer')}
+        onClick={() => router.push('/admin/salesb2b/components/adddealer')}
         className={btnStyle}>
             Add Dealer
         </Button>

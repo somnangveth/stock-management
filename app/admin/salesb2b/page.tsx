@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -11,6 +12,7 @@ import SearchBar from "@/app/components/searchbar";
 
 import { desktop, view, ViewIconBtn } from "@/app/components/ui";
 import { Button } from "@/components/ui/button";
+import { Users, BarChart3, Loader, AlertCircle } from "lucide-react";
 
 export default function SalesPageB2B() {
   const router = useRouter();
@@ -39,24 +41,39 @@ export default function SalesPageB2B() {
 
   if (isLoading) {
     return (
-      <p className="text-center text-gray-500">
-        Loading dealers...
-      </p>
+      <div className="flex flex-col items-center justify-center min-h-96 space-y-3">
+        <Loader size={40} className="text-amber-600 animate-spin" />
+        <p className="text-gray-600 font-medium">加载经销商数据中...</p>
+      </div>
     );
   }
 
   if (isError) {
     return (
-      <p className="text-center text-red-500">
-        Failed to load dealers
-      </p>
+      <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6 flex items-center gap-3">
+        <AlertCircle size={32} className="text-red-600" />
+        <div>
+          <p className="text-red-700 font-semibold">加载失败</p>
+          <p className="text-red-600 text-sm">无法加载经销商数据，请重试</p>
+        </div>
+      </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      {/* Page Header */}
+      <div className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-lg p-6 border border-slate-200">
+        <div className="flex items-center gap-3 mb-2">
+          <Users size={32} className="text-amber-600" />
+          <h1 className="text-3xl font-bold text-gray-800">Sale Dealer</h1>
+        </div>
+        <p className="text-gray-600">Have <span className="font-semibold text-amber-600">{dealerData?.length || 0}</span> sale dealers</p>
+        <div className="h-1 w-16 bg-amber-500 rounded-full mt-3"></div>
+      </div>
+
       {/* Top Actions */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center gap-4 flex-wrap">
         {/* 🔍 Search Bar */}
         <SearchBar
           data={dealerData}
@@ -67,46 +84,67 @@ export default function SalesPageB2B() {
             "email_address",
             "businesstype",
           ]}
-          placeholder="Search dealer..."
-          className="w-[320px]"
+          placeholder="Search dealers..."
+          className="flex-1 min-w-[300px]"
         />
 
         <div className="flex gap-3">
           <Button
-            className={ViewIconBtn}
+            className="bg-slate-50 border-2 border-amber-500 text-slate-800 font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-slate-100 transition-all duration-300 flex items-center gap-2"
             onClick={() => router.push("/admin/salesb2b/components/pos")}
           >
-            {desktop}
+            <BarChart3 size={20} className="text-amber-600" />
+            Sales Overview
           </Button>
 
           <AddDealerForm />
         </div>
       </div>
 
-      {/* Dealer Table */}
-      <MemberTable
-        itemsPerPage={6}
-        members={filteredDealers}
-        columns={[
-          "business_name",
-          "dealer_name",
-          "email_address",
-          "businesstype",
-          "action",
-        ]}
-        form={(dealer) => (
-          <Button
-            onClick={() =>
-              router.push(
-                `/admin/salesb2b/components/dealerdetail/${dealer.dealer_id}`
-              )
-            }
-            className={ViewIconBtn}
-          >
-            {view}
-          </Button>
+      {/* Table Section */}
+      <div className="bg-white rounded-lg shadow-md border border-slate-200 overflow-hidden">
+        {/* Table Header */}
+        <div className="bg-gradient-to-r from-slate-50 to-slate-100 px-6 py-4 border-b border-slate-200">
+          <h2 className="text-lg font-semibold text-gray-800"></h2>
+          <p className="text-sm text-gray-500 mt-1">Show {filteredDealers.length} dealers</p>
+        </div>
+
+
+        {/* Table Content */}
+        {filteredDealers.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <Users size={48} className="text-gray-300 mb-3" />
+            <p className="text-gray-500 font-medium">No dealers found</p>
+          </div>
+        ) : (
+          <div className="p-6">
+            <MemberTable
+              itemsPerPage={6}
+              members={filteredDealers}
+              columns={[
+                "business_name",
+                "dealer_name",
+                "email_address",
+                "businesstype",
+                "action",
+              ]}
+              form={(dealer) => (
+                <Button
+                  onClick={() =>
+                    router.push(
+                      `/admin/salesb2b/components/dealerdetail/${dealer.dealer_id}`
+                    )
+                  }
+                  className="bg-slate-50 border border-amber-500 text-amber-600 hover:bg-amber-50 font-medium py-1 px-3 rounded transition-all duration-300"
+                  size="sm"
+                >
+                  View Details
+                </Button>
+              )}
+            />
+          </div>
         )}
-      />
+      </div>
     </div>
   );
 }

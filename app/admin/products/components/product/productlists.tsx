@@ -8,6 +8,7 @@ import { EditIconBtn, SubmitBtn, view } from "@/app/components/ui";
 import { deleteProduct} from "@/app/functions/admin/stock/product/product";
 import { fetchCategoryAndSubcategory } from "@/app/functions/admin/api/controller";
 import { toast } from "sonner";
+import DeleteProduct from "./deleteproduct";
 
 // Define enhanced product type
 export interface EnhancedProduct extends Product {
@@ -151,9 +152,8 @@ export default function ProductList({
           'product_image',
           'sku-code',     
           'product_name',
-          'base_unit',
+          'description',
           'category_id',
-          'subcategory_id',
           'action'
         ]}
         form={(product) => {
@@ -170,6 +170,7 @@ export default function ProductList({
               href={`/admin/products/components/productdetail/${p.product_id}`}>
                 {view}
               </Link>
+              <DeleteProduct product={productData}/>
             </div>
           );
         }}

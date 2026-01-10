@@ -1,5 +1,5 @@
 "use server";
-import { createSupabaseAdmin, createSupabaseServerClient } from "@/lib/supbase/action";
+import { createSupabaseAdmin } from "@/lib/supbase/action";
 
 //Add Batches
 export async function addBatch(
@@ -15,7 +15,7 @@ export async function addBatch(
         cost_price: number,
     }>
 ){
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseAdmin();
 
     try{
         // Inserting into Stock Alert First
@@ -88,7 +88,7 @@ export async function updateBatch(
     cost_price: number;
   }>
 ) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdmin();
   try {
     // Get the OLD batch quantity before updating
     const { data: oldBatch, error: oldBatchError } = await supabase
@@ -180,7 +180,7 @@ export async function updateBatch(
 
 //Delete Batch
 export async function deleteBatch(batch_id: string, product_id: string) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseAdmin();
   try {
     // Fetch the batch to be deleted (with batch_id filter!)
     const { data: currentBatch, error: currentBatchError } = await supabase
@@ -239,7 +239,7 @@ export async function deleteBatch(batch_id: string, product_id: string) {
 }
 //Fetch All Batch 
 export async function fetchActiveBatch(){
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseAdmin();
 
     const {data: batchData, error: batchError} = await supabase
     .from("product_batches")
@@ -258,7 +258,7 @@ export async function fetchActiveBatch(){
 
 
 export async function fetchBatch(){
-    const supabase = await createSupabaseServerClient();
+    const supabase = await createSupabaseAdmin();
 
     const {data: batchData, error: batchError} = await supabase
     .from("product_batches")

@@ -3,7 +3,7 @@ import { Admin } from "@/type/membertype";
 import MemberTable from "@/app/components/tables/membertable";
 import EditMember from "./editmember";
 import Link from "next/link";
-import { view } from "@/app/components/ui";
+import { EditIconBtn, view } from "@/app/components/ui";
 import DeleteMember from "./deletemember";
 
 interface AdminListProps {
@@ -30,8 +30,9 @@ export default function AdminList({ data}: AdminListProps) {
           const a = admin as Admin;
           return (
             <div className="flex items-center gap-2">
-              <EditMember admin={a} />
-              <Link href={`/admin/user/components/admin/admindetail/${a.admin_id}`}>
+              <Link 
+              className={EditIconBtn}
+              href={`/admin/user/components/admin/admindetail/${a.admin_id}`}>
                 {view}
               </Link>
             </div>

@@ -5,6 +5,7 @@ import DraftReceiptPanel from "./ components/completedpanel";
 import CompletedReceiptPanel from "./ components/draftpanel";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { FaSignal } from "react-icons/fa6";
 
 export default function TrackerPage() {
   const router = useRouter();

@@ -12,7 +12,6 @@ export default function VendorForm({
     return(
         <DialogForm
         id="vendor-trigger"
-        title="Create Vendor"
         Trigger ={
             <button
             className={btnStyle}>

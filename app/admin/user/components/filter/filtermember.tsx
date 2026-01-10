@@ -68,12 +68,12 @@ export default function FilterMember() {
           </Select>
 
           <div className="flex items-center gap-4">
-            <button
+            {/* <button
               onClick={() => router.push("/admin/user/components/permission")}
               className="bg-gray-200 rounded-full text-xl p-2 hover:bg-gray-300"
             >
               {userGear}
-            </button>
+            </button> */}
             <CreateForm />
           </div>
         </div>

@@ -8,7 +8,7 @@ import { styledToast } from "@/app/components/toast";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { CancelBtn, SubmitBtn } from "@/app/components/ui";
+import { CancelBtn, SubmitBtn, SubmitBtnFull } from "@/app/components/ui";
 import { Price } from "@/type/producttype";
 
 const UpdateSchema = z.object({
@@ -179,7 +179,7 @@ export default function UpdateSinglePriceB2B({priceData}:{priceData: Price}){
                                 type="number"
                                 readOnly
                                 {...field}
-                                value={field.value.toFixed(2)}
+                                value={field.value}
                                 className="bg-gray-100"
                                 />
                             </FormControl>
@@ -187,16 +187,11 @@ export default function UpdateSinglePriceB2B({priceData}:{priceData: Price}){
                     )}/>
 
                     <div>
-                    {/* Cancel Button */}
-                    <Button
-                    className={CancelBtn}>
-                        Cancel
-                    </Button>
                     {/* Submit Button */}
                     <Button 
                         type="submit" 
                         disabled={isPending}
-                        className={SubmitBtn}
+                        className={SubmitBtnFull}
                     >
                         {isPending ? "Updating..." : "Update Price"}
                     </Button>

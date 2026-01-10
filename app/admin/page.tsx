@@ -1,20 +1,23 @@
 "use client";
 import Link from "next/link";
-import { Package, DollarSign, ShoppingCart, Truck } from "lucide-react";
+import { Package, DollarSign, ShoppingCart, Truck, TrendingUp, AlertTriangle, Users, BarChart3 } from "lucide-react";
 import TotalUsersCatalog from "../components/catalog/totaluserscatalog";
+import TotalAll from "../components/catalog/totalall";
 import TotalStockPanel from "../components/chart/totalstock";
 import ProfileWelcome from "../components/profile/profilewelcome";
 import ExpiryStockPanel from "../components/chart/expirystock";
 import AlertExpiredPanel from "../components/notifications/alertexpiredpanel";
+import SaleChart from "../components/catalog/salechart";
 
 export default function AdminPage() {
-  const panelStyle = 'flex-1 border border-amber-600 bg-amber-700 text-white font-semibold  rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 p-6 flex items-center justify-center';
+  const panelStyle = 'group relative flex-1 border-2 border-amber-500/20 bg-gradient-to-br from-amber-600 to-amber-700 text-white font-semibold rounded-2xl shadow-md hover:shadow-2xl hover:scale-[1.02] hover:border-amber-400/40 transition-all duration-300 p-6 overflow-hidden';
   
   return (
-    <div className="p-6 space-y-6  min-h-screen">
-      <ProfileWelcome/>
+    <div className="min-h-screen bg-slate-50 p-6 space-y-6">
+      {/* 欢迎区域 */}
+      <ProfileWelcome />
       
-      <div className="flex h-28 gap-4">
+     <div className="flex h-28 gap-4">
         <div className={panelStyle}>
           <Link href="/admin/products" className="text-lg hover:text-amber-100 transition-colors flex flex-col items-center gap-2">
             <Package size={32} />
@@ -28,7 +31,7 @@ export default function AdminPage() {
           </Link>
         </div>
         <div className={panelStyle}>
-          <Link href="/admin/sales" className="text-lg hover:text-amber-100 transition-colors flex flex-col items-center gap-2">
+          <Link href="/admin/salesb2c" className="text-lg hover:text-amber-100 transition-colors flex flex-col items-center gap-2">
             <ShoppingCart size={32} />
             Sales Management
           </Link>
@@ -40,33 +43,45 @@ export default function AdminPage() {
           </Link>
         </div>
       </div>
-      
-      <div className="flex gap-4">
-        <div className="w-1/3 shadow-lg rounded-xl overflow-hidden bg-white">
-          <TotalStockPanel/>
-        </div>
-        <div className="w-1/3 shadow-lg rounded-xl overflow-hidden bg-white">
-          <ExpiryStockPanel/>
-        </div>
-      </div>
-      
-      <div className="flex w-full gap-4">
-        <div className="w-1/3 ">
-          
-        </div>
-        <div className="w-1/3 shadow-lg rounded-xl overflow-hidden bg-white flex items-center justify-center text-gray-400 text-xl">
-          Hello
-        </div>
-      <div className="w-1/3 h-[370px] border border-gray-200 shadow-lg rounded-xl overflow-hidden bg-white flex flex-col">
-      <div className="h-12 bg-amber-700 flex justify-center items-center text-amber-50 font-semibold text-lg shadow-sm">
-        Expiry Notification
-      </div>
 
-      <div className="flex-1 overflow-y-auto m-3 scrollbar-thin scrollbar-thumb-amber-600 scrollbar-track-gray-100">
-        <AlertExpiredPanel/>
+      
+      {/* 统计卡片行 */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="shadow-md rounded-lg overflow-hidden">
+          <TotalStockPanel />
+        </div>
+        <div className="shadow-md rounded-lg overflow-hidden">
+          <ExpiryStockPanel />
+        </div>
       </div>
-      </div>
+      
+      {/* 下方内容区 */}
+      <div className="grid grid-cols-3 gap-4">
+        {/* 左侧占位符 */}
+        <div className="shadow-md rounded-lg overflow-hidden">
+          <TotalAll />
+        </div>
 
+        {/* 中间占位符 */}
+        <div className="shadow-md rounded-lg overflow-hidden">
+          <SaleChart />
+        </div>
+
+        {/* 右侧过期提醒 */}
+        <div className="bg-white border-2 border-slate-200 shadow-md rounded-lg overflow-hidden flex flex-col h-96">
+          {/* 标题栏 */}
+          <div className="h-14 border-b-2 border-amber-600 bg-white flex items-center px-6">
+            <h3 className="text-slate-800 font-bold text-base flex items-center gap-2">
+              <div className="w-1 h-6 bg-amber-600 rounded-full"></div>
+              Product Expiry Alerts
+            </h3>
+          </div>
+
+          {/* 内容区 */}
+          <div className="flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-amber-400 scrollbar-track-gray-100">
+            <AlertExpiredPanel />
+          </div>
+        </div>
       </div>
     </div>
   );

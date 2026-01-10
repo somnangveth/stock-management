@@ -25,7 +25,6 @@ import {
 import Link from "next/link";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import SignOut from "@/app/auth/components/signout";
-import { PermissionGate } from "../permission/permissiongate";
 
 // Menu items
 const items = [
@@ -43,53 +42,24 @@ const items = [
         title: "Products",
         url: "/staff/products",
         icon: FaBoxesStacked,
-        permission: ["product.view", "category.view"],
       },
       {
         title: "Categories",
         url: "/staff/categories",
         icon: BsFillDiagram3Fill,
-        permission: ["category.view"]
       },
-      {
-        title: "Stock",
-        url: "/admin/stock",
-        icon: FaCubesStacked,
-        permission: ["stock.view"]
-      }
     ]
   },
   {
-    title: "Price",
-    url: "/admin/price",
-    icon: FaDollarSign,
-    permission: ["price.view"]
+    title: "Stock",
+    url: "/staff/stock",
+    icon: FaCubesStacked,
   },
   {
     title: "Sales",
-    url: "/admin/sales",
+    url: "/staff/salesb2c",
     icon: FaChartBar,
-    subitems: [
-      {
-        title: "General Customer",
-        url: "/admin/salesb2c",
-        icon: FaReceipt,
-        permission: ["sale.view"]
-      },
-      {
-        title: "Dealer",
-        url: "/admin/salesb2b",
-        icon: FaDesktop,
-        permission: ["sale.view"]
-      }
-    ]
   },
-  {
-    title: "Supplier Management",
-    url: "/admin/vendors",
-    icon: FaUsersLine,
-    permission: ["vendor.view"]
-  }
 ];
 
 export function StaffSideBar() {
@@ -101,67 +71,48 @@ export function StaffSideBar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {
-                // For items with subitems, collect all subitem permissions
-                const subitemPermissions = item.subitems
-                  ?.flatMap(sub => Array.isArray(sub.permission) ? sub.permission : (sub.permission ? [sub.permission] : []))
-                  .filter(Boolean) || [];
-                
-                // Use item's own permission or all subitem permissions
-                const itemPermission = item.permission || (subitemPermissions.length > 0 ? subitemPermissions : []);
-                
                 return (
-                  <PermissionGate
+                  <Collapsible
                     key={item.title}
-                    permission={itemPermission}
-                    fallback={<></>}
+                    asChild
+                    defaultOpen={false}
+                    className="group/collapsible"
                   >
-                    <Collapsible
-                      asChild
-                      defaultOpen={false}
-                      className="group/collapsible"
-                    >
-                      <SidebarMenuItem>
-                        {item.subitems ? (
-                          <>
-                            <CollapsibleTrigger asChild>
-                              <SidebarMenuButton tooltip={item.title}>
-                                <item.icon />
-                                <span>{item.title}</span>
-                                <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                              </SidebarMenuButton>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent>
-                              <SidebarMenuSub>
-                                {item.subitems.map((subitem) => (
-                                  <PermissionGate
-                                    key={subitem.title}
-                                    permission={subitem.permission || []}
-                                    fallback={<></>}
-                                  >
-                                    <SidebarMenuSubItem>
-                                      <SidebarMenuSubButton asChild>
-                                        <Link href={subitem.url}>
-                                          <subitem.icon />
-                                          <span>{subitem.title}</span>
-                                        </Link>
-                                      </SidebarMenuSubButton>
-                                    </SidebarMenuSubItem>
-                                  </PermissionGate>
-                                ))}
-                              </SidebarMenuSub>
-                            </CollapsibleContent>
-                          </>
-                        ) : (
-                          <SidebarMenuButton asChild tooltip={item.title}>
-                            <Link href={item.url}>
+                    <SidebarMenuItem>
+                      {item.subitems ? (
+                        <>
+                          <CollapsibleTrigger asChild>
+                            <SidebarMenuButton tooltip={item.title}>
                               <item.icon />
                               <span>{item.title}</span>
-                            </Link>
-                          </SidebarMenuButton>
-                        )}
-                      </SidebarMenuItem>
-                    </Collapsible>
-                  </PermissionGate>
+                              <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                            </SidebarMenuButton>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            <SidebarMenuSub>
+                              {item.subitems.map((subitem) => (
+                                <SidebarMenuSubItem key={subitem.title}>
+                                  <SidebarMenuSubButton asChild>
+                                    <Link href={subitem.url}>
+                                      <subitem.icon />
+                                      <span>{subitem.title}</span>
+                                    </Link>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              ))}
+                            </SidebarMenuSub>
+                          </CollapsibleContent>
+                        </>
+                      ) : (
+                        <SidebarMenuButton asChild tooltip={item.title}>
+                          <Link href={item.url}>
+                            <item.icon />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      )}
+                    </SidebarMenuItem>
+                  </Collapsible>
                 );
               })}
             </SidebarMenu>

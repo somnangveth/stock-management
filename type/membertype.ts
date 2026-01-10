@@ -96,3 +96,59 @@ export type Dealer = {
   payment_duedate: string;
   profile_image: string;
 }
+
+// 付款状态类型
+export type PaymentType = "paid" | "unpaid" | "partial";
+
+// 账期状态类型
+export type TermStatus = "low" | "medium" | "high" | "overdue";
+
+// 来源类型
+export type SourceType = "purchase" | "refund";
+
+export interface Ledger {
+  id: null |undefined;
+  ledger_id: string; // UUID
+  vendor_id: number;
+  vendor_name: string; // 如果需要从 vendors 表 JOIN 获取
+  source_type: SourceType;
+  source_id: string; // 如果需要关联采购单或退货单ID
+  debit: number; // numeric(12, 2)
+  credit: number; // numeric(12, 2)
+  balance: number; // numeric(12, 2)
+  note: string;
+  created_at: string; // timestamp with time zone
+  created_by: string; // UUID
+  payment_duedate: string; // date
+  payment_status: PaymentType;
+  term_status: TermStatus;
+}
+
+// 创建台账记录的输入类型（排除自动生成的字段）
+export interface CreateLedgerInput {
+  vendor_id: number;
+  source_type: SourceType;
+  source_id?: string;
+  debit: number;
+  credit: number;
+  note: string;
+  created_at: string; // 创建日期（可选，格式：YYYY-MM-DD）
+  payment_duedate: string; // 付款到期日（格式：YYYY-MM-DD）
+  payment_status: PaymentType;
+}
+
+// 更新台账记录的输入类型
+export interface UpdateLedgerInput {
+  vendor_id: number;
+  source_type: SourceType;
+  debit: number;
+  credit: number;
+  note: string;
+  created_at: string; // 新增
+  payment_duedate: string;
+  payment_status: PaymentType;
+}
+
+export interface EnhancedLedger extends Ledger {
+  key: string; // React 列表 key
+}

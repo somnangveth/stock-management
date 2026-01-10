@@ -223,7 +223,7 @@ export default function DisplayAll(
         <div className="flex flex-wrap gap-2">
           <button
           className={btnStyle}
-          onClick={() => router.push('/admin/categories/components/categoryInfo')}
+          onClick={() => router.push('/admin/categories/components/categoryinfo')}
           >
             {view}Categories
           </button>

@@ -61,47 +61,60 @@ export default function DiscountDetailPage() {
   };
 
   return (
-    <>
-      <button onClick={() => router.push("/admin/price")} className="flex items-center text-gray-500 gap-2 mb-4">
-        <ArrowLeft /> Back to main page
-      </button>
+  <>
+    {/* Top Page Controls (STAYS FIXED) */}
+    <button
+      onClick={() => router.push("/admin/price")}
+      className="flex items-center text-gray-500 gap-2 mb-4"
+    >
+      <ArrowLeft className="w-4 h-4" />
+      Back to main page
+    </button>
 
-      <h2 className="text-lg font-semibold mb-5">Discount Products</h2>
+    <h2 className="text-lg font-semibold mb-5">Discount Products</h2>
 
-      {/* Bulk Discount Button */}
-      {selectedDiscounts.length > 0 && (
-        <div className="mb-4">
-          <DiscountMultipleForm prices={selectedDiscounts} />
-        </div>
-      )}
+    {/* Bulk Discount Button */}
+    {selectedDiscounts.length > 0 && (
+      <div className="mb-4">
+        <DiscountMultipleForm prices={selectedDiscounts} />
+      </div>
+    )}
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-calc[100vh-90px]">
-        {/* Header */}
-        <div className="grid grid-cols-9 px-4 py-3 bg-gray-50 text-sm font-semibold text-gray-600 border-b sticky top-0">
-          <span></span> {/* Checkbox column */}
-          <span>Product Name</span>
-          <span>Start Date</span>
-          <span>End Date</span>
-          <span className="text-left">Discount Percent</span>
-          <span>Discount Price</span>
-          <span>Status</span>
-          <span className="text-center">Action</span>
-        </div>
+    {/* Table Wrapper */}
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-[calc(100vh-220px)] flex flex-col">
+      
+      {/* Table Header (STICKY) */}
+      <div className="grid grid-cols-9 px-4 py-3 bg-gray-50 text-sm font-semibold text-gray-600 border-b sticky top-0 z-10">
+        <span className="text-center"></span>
+        <span>Product Name</span>
+        <span>Start Date</span>
+        <span>End Date</span>
+        <span className="text-center">Discount %</span>
+        <span>Discount Price</span>
+        <span>Status</span>
+        <span className="text-center">Action</span>
+      </div>
 
-        {/* Rows */}
+      {/* Scrollable Rows */}
+      <div className="flex-1 overflow-y-auto">
         {discountPriceList.length === 0 && (
-          <div className="p-6 text-center text-gray-500">No discounts found</div>
+          <div className="p-6 text-center text-gray-500">
+            No discounts found
+          </div>
         )}
 
         {discountPriceList.map((p: Price) => {
-          const isSelected = selectedDiscounts.some((item) => item.price_id === p.price_id);
+          const isSelected = selectedDiscounts.some(
+            (item) => item.price_id === p.price_id
+          );
+
           return (
             <div
               key={p.price_id}
-              className="grid grid-cols-9 items-center px-4 py-3 text-sm border-b last:border-b-0 hover:bg-gray-50 transition overflow-y-auto overflow-hidden"
+              className="grid grid-cols-9 items-center px-4 py-3 text-sm border-b last:border-b-0 hover:bg-gray-50 transition"
             >
               {/* Checkbox */}
-              <span className="flex items-center justify-center">
+              <span className="flex justify-center">
                 <input
                   type="checkbox"
                   checked={isSelected}
@@ -111,33 +124,42 @@ export default function DiscountDetailPage() {
               </span>
 
               {/* Product */}
-              <span className="flex items-center gap-2 font-medium text-gray-800">
-                <Image
-                  src={p.product_image || "/assets/product_default.jpg"}
-                  alt={p.product_name || "no image"}
-                  width={30}
-                  height={30}
-                />
-                {p.product_name}
+              <span className="flex items-center gap-3 font-medium text-gray-800">
+                <div className="relative w-8 h-8 flex-shrink-0">
+                  <Image
+                    src={p.product_image || "/assets/product_default.jpg"}
+                    alt={p.product_name || "product"}
+                    fill
+                    className="rounded object-cover"
+                    sizes="32px"
+                  />
+                </div>
+                <span className="truncate">{p.product_name}</span>
               </span>
 
               {/* Dates */}
               <span className="text-gray-600">{formatDate(p.start_date)}</span>
               <span className="text-gray-600">{formatDate(p.end_date)}</span>
 
-              {/* Price */}
-              <span className="font-semibold text-gray-800 text-center">%{p.discount_percent}</span>
-              <span className="font-semibold text-gray-800">${p.discount_price}</span>
+              {/* Discount */}
+              <span className="text-center font-semibold text-gray-800">
+                %{p.discount_percent}
+              </span>
+              <span className="font-semibold text-gray-800">
+                ${p.discount_price}
+              </span>
 
               {/* Status */}
               <span>
                 <span
-                  className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
-                    ${p.discount_status === "active"
-                      ? "bg-green-100 text-green-700"
-                      : p.discount_status === "expired"
-                      ? "bg-red-100 text-red-700"
-                      : "bg-gray-100 text-gray-600"}`}
+                  className={`inline-flex px-3 py-1 rounded-full text-xs font-medium
+                    ${
+                      p.discount_status === "active"
+                        ? "bg-green-100 text-green-700"
+                        : p.discount_status === "expired"
+                        ? "bg-red-100 text-red-700"
+                        : "bg-gray-100 text-gray-600"
+                    }`}
                 >
                   {p.discount_status}
                 </span>
@@ -151,6 +173,8 @@ export default function DiscountDetailPage() {
           );
         })}
       </div>
-    </>
-  );
+    </div>
+  </>
+);
+
 }

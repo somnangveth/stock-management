@@ -1,4 +1,4 @@
-"use client";
+"use server";
 
 import { fetchStockMovement } from "@/app/functions/admin/stock/stockalert/issueproduct";
 import { NextResponse } from "next/server";

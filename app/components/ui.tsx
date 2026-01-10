@@ -11,6 +11,8 @@ import { FaBox } from "react-icons/fa";
 import { LuTicketPercent } from "react-icons/lu";
 import { FaExclamationCircle } from "react-icons/fa";
 import { FaUserGear } from "react-icons/fa6";
+import { ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 //============== Icons ==================
 // Edit Pen
@@ -76,4 +78,22 @@ export const ViewIconBtn = "bg-yellow-100 rounded-full text-amber-600 hover:bg-y
 export const DeleteIconBtn = "bg-transparent hover:bg-transparent text-red-500 hover:text-red-700";
 //Completed Button
 export const CompletedBtn = "bg-green-500 text-white px-3 py-1 rounded-lg";
+
+//Back button
+type BackBtnProps = {
+  onCancel: string;
+};
+
+export const BackBtn = ({ onCancel }: BackBtnProps) => {
+  const router = useRouter();
+
+  return (
+    <button
+      onClick={() => router.push(onCancel)}
+      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+    >
+      <ArrowLeft className="h-5 w-5 text-gray-600" />
+    </button>
+  );
+};
 //=========================================

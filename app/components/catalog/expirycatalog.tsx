@@ -159,3 +159,56 @@ export function CriticalExpiryCatalog({
     </div>
   );
 }
+
+
+type StockMovement = {
+  movement_id: string | number;
+  product_id: string | number;
+  product_name: string;
+  product_image?: string;
+  batch_number: string | number;
+  movement_type: "adjustment" | "return" | "damage";
+  quantity: number;
+  cost_loss?: number;
+  movement_date: string;
+  reason?: string;
+  created_at?: string;
+};
+
+// Get badge styling based on movement type
+function getMovementBadge(type: string) {
+  switch (type) {
+    case "adjustment":
+      return {
+        bg: "bg-blue-500",
+        border: "border-blue-500",
+        cardBg: "bg-blue-50",
+        text: "Adjustment",
+        icon: "📊"
+      };
+    case "return":
+      return {
+        bg: "bg-green-500",
+        border: "border-green-500",
+        cardBg: "bg-green-50",
+        text: "Return",
+        icon: "↩️"
+      };
+    case "damage":
+      return {
+        bg: "bg-red-500",
+        border: "border-red-500",
+        cardBg: "bg-red-50",
+        text: "Damage",
+        icon: "⚠️"
+      };
+    default:
+      return {
+        bg: "bg-gray-500",
+        border: "border-gray-500",
+        cardBg: "bg-gray-50",
+        text: "Unknown",
+        icon: "❓"
+      };
+  }
+}
