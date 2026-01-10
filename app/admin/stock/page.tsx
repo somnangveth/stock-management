@@ -8,7 +8,7 @@ import ExpiryStockPanel from "@/app/components/chart/expirystock";
 import { useQuery } from "@tanstack/react-query";
 import { getExpiredBatches } from "@/app/functions/admin/stock/expiry/expiry";
 import { useRouter } from "next/navigation";
-import { questionMark } from "@/app/components/ui";
+import { DeleteIconBtn, questionMark } from "@/app/components/ui";
 
 export default function StockPage() {
   const router = useRouter();
@@ -62,6 +62,7 @@ export default function StockPage() {
       <div className="text-lg text-red bg-transparent">
         
         <button
+        className={DeleteIconBtn}
         onClick={() => router.push("/admin/stock/components/expirypanel")}>
           {questionMark}
         </button>
