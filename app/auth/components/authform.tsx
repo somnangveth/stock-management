@@ -90,7 +90,7 @@ export default function AuthForm() {
         <Button
           type="submit"
           disabled={isPending}
-          className="w-full border border-blue-700 bg-blue-100 text-blue-700 hover:bg-blue-700 hover:text-white transition"
+          className="w-full border border-amber-700 bg-amber-100 text-amber-700 hover:bg-amber-700 hover:text-white transition"
         >
           {isPending ? (
             <>
