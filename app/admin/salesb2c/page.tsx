@@ -41,7 +41,7 @@ export default function SalePageB2C() {
 
         <div className="flex gap-2">
           <button
-            onClick={() => router.push("/admin/salesb2c/components/pos")}
+            onClick={() => router.push("/app/admin/salesb2c/pos")}
             className="p-2 bg-gray-200 rounded-full hover:bg-gray-400 text-gray-700"
           >
             {desktop}
