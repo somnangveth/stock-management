@@ -189,7 +189,6 @@ export default function ProductList({
             'sku-code',     
             'product_name',
             'description',
-            'category_id',
             'action'
           ]}
           form={(product) => {
