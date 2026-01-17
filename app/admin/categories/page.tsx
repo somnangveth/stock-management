@@ -134,7 +134,7 @@ export default function CategoryPage() {
           {filteredCategoryIds.length > 0 && (
             <button
               onClick={() => setFilteredCategoryIds([])}
-              className="px-3 py-2 text-gray-600 hover:text-gray-800 underline"
+              className={btnStyle}
             >
               Clear filter
             </button>

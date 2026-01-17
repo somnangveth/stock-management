@@ -1,9 +1,7 @@
 // ============================================
 // components/admin/panels/TotalStockPanel.tsx
 // ============================================
-
 "use client";
-
 import { fetchProducts } from "@/app/functions/admin/api/controller";
 import { Product } from "@/type/producttype";
 import { useQuery } from "@tanstack/react-query";
@@ -18,8 +16,8 @@ export default function TotalStockPanel() {
 
   const totalProducts = productData?.length || 0;
   
-  // 计算总库存数量
-  const totalStockQuantity = productData?.reduce((sum, product:any) => {
+  // Calculate total stock quantity
+  const totalStockQuantity = productData?.reduce((sum, product: any) => {
     return sum + (product.stock || 0);
   }, 0) || 0;
 
@@ -27,8 +25,8 @@ export default function TotalStockPanel() {
     <PanelCard
       icon={Package}
       title="Total Stock"
-      mainValue={totalStockQuantity}
-      subtitle=""
+      mainValue={totalProducts}
+      subtitle={`Products`}
       isLoading={isLoading}
       error={!!error}
       onError={() => window.location.reload()}
@@ -39,13 +37,9 @@ export default function TotalStockPanel() {
       valueColor="text-amber-600"
       errorMessage="Error Loading Products"
     >
-      {/* 分割线 */}
-      <div className="border-t border-amber-200 pt-3 mt-15">
-        {/* 副数据 */}
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-medium text-amber-600">Total Product</span>
-          <span className="text-sm font-bold text-amber-600">{totalProducts}</span>
-        </div>
+      {/* Divider */}
+      <div className="border-t border-amber-200 pt-3 mt-3">
+
       </div>
     </PanelCard>
   );
