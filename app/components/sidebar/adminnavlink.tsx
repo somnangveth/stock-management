@@ -108,12 +108,7 @@ export function AppSideBar() {
       <SidebarHeader className=" flex items-center">
   <div className="flex items-center gap-2 w-full">
     <SidebarTrigger className="" />
-
-    {/* Logo */}
-    
-    <div className="flex justify-center overflow-hidden h-10">
-
-    </div>
+    <h2 className="font-bold">Admin Dashboard</h2>
   </div>
 </SidebarHeader>
 

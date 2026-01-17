@@ -254,7 +254,7 @@ export default function ExpiryStockMovementPanel() {
                       : "bg-blue-100 text-blue-700 hover:bg-blue-200"
                   }`}
                 >
-                  📊 Adjustments ({movementCounts.adjustment})
+                  Adjustments ({movementCounts.adjustment})
                 </button>
                 
                 <button
@@ -265,7 +265,7 @@ export default function ExpiryStockMovementPanel() {
                       : "bg-green-100 text-green-700 hover:bg-green-200"
                   }`}
                 >
-                  ↩️ Returns ({movementCounts.return})
+                  Returns ({movementCounts.return})
                 </button>
                 
                 <button
@@ -276,7 +276,7 @@ export default function ExpiryStockMovementPanel() {
                       : "bg-red-100 text-red-700 hover:bg-red-200"
                   }`}
                 >
-                  ⚠️ Damages ({movementCounts.damage})
+                  Damages ({movementCounts.damage})
                 </button>
               </div>
 

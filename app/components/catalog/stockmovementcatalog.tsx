@@ -55,7 +55,7 @@ function getMovementBadge(type: string) {
         border: "border-blue-500",
         cardBg: "bg-blue-50",
         text: "Adjustment",
-        icon: "📊"
+        icon: ""
       };
     case "return":
       return {
@@ -63,7 +63,7 @@ function getMovementBadge(type: string) {
         border: "border-green-500",
         cardBg: "bg-green-50",
         text: "Return",
-        icon: "↩️"
+        icon: "↩"
       };
     case "damage":
       return {
@@ -71,7 +71,7 @@ function getMovementBadge(type: string) {
         border: "border-red-500",
         cardBg: "bg-red-50",
         text: "Damage",
-        icon: "⚠️"
+        icon: ""
       };
     default:
       return {
@@ -79,7 +79,7 @@ function getMovementBadge(type: string) {
         border: "border-gray-500",
         cardBg: "bg-gray-50",
         text: "Unknown",
-        icon: "❓"
+        icon: ""
       };
   }
 }
@@ -220,7 +220,7 @@ export function ReturnCatalog({
   
   return (
     <div className="space-y-3">
-      <h3 className="text-lg font-semibold text-green-700">↩️ Product Returns</h3>
+      <h3 className="text-lg font-semibold text-green-700">Product Returns</h3>
       {returns.map((item) => (
         <div
           key={item.movement_id}
@@ -265,7 +265,7 @@ export function DamageCatalog({
   
   return (
     <div className="space-y-3">
-      <h3 className="text-lg font-semibold text-red-700">⚠️ Damaged Products</h3>
+      <h3 className="text-lg font-semibold text-red-700"> Damaged Products</h3>
       {damages.map((item) => (
         <div
           key={item.movement_id}

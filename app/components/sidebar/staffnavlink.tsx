@@ -72,7 +72,7 @@ export function StaffSideBar() {
     <Sidebar collapsible="icon">
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Staff Dashboard</SidebarGroupLabel>
+          <SidebarGroupLabel className="font-bold">Staff Dashboard</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => {
