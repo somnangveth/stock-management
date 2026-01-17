@@ -27,7 +27,7 @@ import Link from "next/link";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import SignOut from "@/app/auth/components/signout";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-
+import Image from "next/image";
 // Menu items
 const items = [
   {
@@ -49,6 +49,11 @@ const items = [
         title: "Categories",
         url: "/admin/categories",
         icon: BsFillDiagram3Fill
+      },
+      {
+        title: "Attribute",
+        url: "/admin/attribute",
+        icon: FaArchive,
       }
     ]
   },
@@ -64,25 +69,8 @@ const items = [
   },
   {
     title: "Sales Management",
-    url: "/admin/sales",
+    url: "/admin/salesb2c",
     icon: FaChartBar,
-    subitems: [
-      {
-        title: "General Customer",
-        url: "/admin/salesb2c",
-        icon: FaReceipt
-      },
-      {
-        title: "Dealer",
-        url: "/admin/salesb2b",
-        icon: FaDesktop
-      }
-    ]
-  },
-  {
-    title: "Users Management",
-    url: "/admin/user",
-    icon: FaUsers
   },
   {
     title: "Supplier Management",
@@ -105,25 +93,30 @@ const items = [
         icon: FaCubesStacked,
       }
     ]
-  }
+  },
+  {
+    title: "Users Management",
+    url: "/admin/user",
+    icon: FaUsers
+  },
 
 ];
 
 export function AppSideBar() {
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <div className="flex items-center gap-2">
-                <SidebarTrigger className="-ml-1" />
-                <span className="font-semibold">Admin Dashboard</span>
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
+      <SidebarHeader className=" flex items-center">
+  <div className="flex items-center gap-2 w-full">
+    <SidebarTrigger className="" />
+
+    {/* Logo */}
+    
+    <div className="flex justify-center overflow-hidden h-10">
+
+    </div>
+  </div>
+</SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>

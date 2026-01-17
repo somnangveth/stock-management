@@ -12,18 +12,7 @@ export default function RootLayout({
       <body className="">
         <ReactQueryProvider>
           {children}
-
-
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            className: "border shadow-lg rounded-lg",
-            style: {
-              backgroundColor: "white",
-              color: "#374151",
-            },
-          }}
-        />
+          <Toaster position="top-right" richColors />
         </ReactQueryProvider>
       </body>
     </html>

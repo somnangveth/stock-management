@@ -4,9 +4,8 @@
 import { useState, useCallback } from "react";
 import SearchBar from "@/app/components/searchbar";
 import LedgerList from "./components/ledgerlist";
-import LedgerFromPurchase from "./components/addform";
 import { EnhancedLedger } from "@/type/membertype";
-import LedgerForm from "./components/ledgerform";
+import ReceiptForm from "./components/addform";
 
 export default function LedgerManagement() {
   const [refreshKey, setRefreshKey] = useState(0);
@@ -34,13 +33,13 @@ export default function LedgerManagement() {
     <div className="space-y-6 p-6">
       {/* 标题 + 新增 Ledger 按钮 */}
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold">Ledger Management</h1>
-        <LedgerFromPurchase onLedgerAdded={handleLedgerAdded} />
+        <h1 className="text-2xl font-semibold">Recipt History</h1>
+        <ReceiptForm onReceiptAdded={handleLedgerAdded} />
       </div>
 
       {/* 搜索栏 */}
       {searchConfig && (
-        <div className="w-1/3 mt-4">
+        <div className="w-3/5 mt-4">
           <SearchBar
             data={ledgers}
             onSearch={searchConfig.onSearch}
@@ -51,7 +50,7 @@ export default function LedgerManagement() {
       )}
 
       {/* Ledger 表格 */}
-      <div className="mt-4">
+      <div className="mt-4 w-full">
         <LedgerList refreshKey={refreshKey} onDataLoaded={registerSearch} />
       </div>
     </div>

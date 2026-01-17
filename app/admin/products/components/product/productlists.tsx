@@ -4,11 +4,13 @@ import { Product } from "@/type/producttype";
 import { useEffect, useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { EditIconBtn, SubmitBtn, view } from "@/app/components/ui";
-import { deleteProduct} from "@/app/functions/admin/stock/product/product";
-import { fetchCategoryAndSubcategory } from "@/app/functions/admin/api/controller";
+import { EditIconBtn, SubmitBtn, view, ViewIconBtn } from "@/app/components/ui";
+import { deleteProduct } from "@/app/functions/admin/stock/product/product";
 import { toast } from "sonner";
 import DeleteProduct from "./deleteproduct";
+import { fetchProducts } from "@/app/functions/admin/api/controller";
+import { Package, Trash2, AlertCircle, RefreshCw, Eye } from "lucide-react";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
 // Define enhanced product type
 export interface EnhancedProduct extends Product {
@@ -35,44 +37,44 @@ export default function ProductList({
     setDisplayProducts(results);
   }, []);
 
-  const { data: productData, isLoading, error } = useQuery({
+  const { data: productData, isLoading, error, refetch } = useQuery({
     queryKey: ["products", refreshKey],
-    queryFn: fetchCategoryAndSubcategory,
+    queryFn: fetchProducts,
   });
 
   // Process and enhance products when data changes
   useEffect(() => {
     if (!productData) return;
 
-    // Create lookup maps for quick access
-    const categoryMap = new Map(
-      productData.categories.map((cat: { category_id: string; category_name: string; }) => 
-        [cat.category_id, cat.category_name]
-      )
-    );
+    // Handle different possible data structures
+    let productsArray: Product[] = [];
     
-    const subcategoryMap = new Map(
-      productData.subcategories.map((sub: { subcategory_id: string; subcategory_name: string; }) => 
-        [sub.subcategory_id, sub.subcategory_name]
-      )
-    );
+    if (Array.isArray(productData)) {
+      // If productData is directly an array
+      productsArray = productData;
+    } else if (productData.product && Array.isArray(productData.product)) {
+      // If productData has a 'product' property that's an array
+      productsArray = productData.product;
+    } else if (productData.products && Array.isArray(productData.products)) {
+      // If productData has a 'products' property that's an array
+      productsArray = productData.products;
+    }
 
     // Enhance products with category and subcategory names
-    const enhancedProducts: EnhancedProduct[] = productData.product.map((product: Product) => ({
+    const enhancedProducts: EnhancedProduct[] = productsArray.map((product: Product) => ({
       ...product,
-      category_name: categoryMap.get(product.category_id) || 'Unknown',
-      subcategory_name: subcategoryMap.get(product.subcategory_id) || 'Unknown'
     }));
 
     setDisplayProducts(enhancedProducts);
 
-    // Notify parent component if callback provided
+    // Register search capability with parent component using onDataLoaded
     if (onDataLoaded) {
       const searchKeys: (keyof EnhancedProduct)[] = [
         'product_name',
         'sku_code',
         'category_name',
-        'subcategory_name'
+        'subcategory_name',
+        'description'
       ];
       onDataLoaded(enhancedProducts, handleSearchResults, searchKeys);
     }
@@ -80,11 +82,14 @@ export default function ProductList({
 
   // Handle bulk delete
   const handleBulkDelete = async () => {
-    if (selectedProducts.length === 0) return;
+    if (selectedProducts.length === 0) {
+      toast.error('No products selected');
+      return;
+    }
     
     try {
       const res = await deleteProduct(selectedProducts);
-      const result = JSON.parse(res);
+      const result = typeof res === 'string' ? JSON.parse(res) : res;
       
       if (result.error) {
         console.error('Failed to delete products:', result.error);
@@ -92,8 +97,8 @@ export default function ProductList({
       } else {
         toast.success(`${selectedProducts.length} product(s) deleted successfully`);
         setSelectedProducts([]);
-        // Trigger a refetch by incrementing refreshKey or reload
-        window.location.reload();
+        // Refetch data instead of hard reload
+        refetch();
       }
     } catch (error) {
       console.error('Bulk delete error:', error);
@@ -103,20 +108,29 @@ export default function ProductList({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <p className="text-gray-500">Loading products...</p>
+      <div className="flex items-center justify-center p-12">
+        <div className="text-center">
+          <AiOutlineLoading3Quarters className="w-10 h-10 animate-spin text-amber-600 mx-auto mb-3" />
+          <p className="text-amber-900 font-semibold uppercase tracking-wide text-sm">
+            Loading Products...
+          </p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <p className="text-red-500">Failed to load products</p>
+      <div className="flex flex-col items-center justify-center p-12">
+        <div className="w-16 h-16 bg-amber-100 border-2 border-amber-300 flex items-center justify-center mb-4">
+          <AlertCircle className="w-8 h-8 text-amber-600" />
+        </div>
+        <p className="text-amber-900 font-semibold mb-4 text-lg">Failed to Load Products</p>
         <button 
-          onClick={() => window.location.reload()} 
-          className="ml-4 text-blue-600 hover:underline"
+          onClick={() => refetch()} 
+          className="px-6 py-2.5 border-2 border-amber-300 bg-amber-100 hover:bg-amber-200 text-amber-900 font-semibold transition-colors flex items-center gap-2 uppercase tracking-wide text-sm"
         >
+          <RefreshCw className="w-4 h-4" />
           Retry
         </button>
       </div>
@@ -125,60 +139,86 @@ export default function ProductList({
 
   if (displayProducts.length === 0) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <p className="text-gray-500">No products found.</p>
+      <div className="flex flex-col items-center justify-center p-12">
+        <div className="w-20 h-20 bg-amber-100 border-2 border-amber-300 flex items-center justify-center mb-4">
+          <Package className="w-10 h-10 text-amber-600" />
+        </div>
+        <p className="text-amber-900 font-semibold mb-2 text-lg">No Products Found</p>
+        <p className="text-amber-700 mb-6 text-sm">Get started by adding your first product</p>
+        <Link 
+          href="/admin/products/create"
+          className="px-6 py-2.5 border-2 border-amber-300 bg-amber-100 hover:bg-amber-200 text-amber-900 font-semibold transition-colors uppercase tracking-wide text-sm"
+        >
+          Add Your First Product
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className="space-y-4">
+      {/* Bulk Actions Bar */}
       {selectedProducts.length > 0 && (
-        <div className="mb-4 p-3 rounded-lg flex items-center justify-between">
+        <div className="bg-amber-100 border-2 border-amber-300 p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-amber-600 flex items-center justify-center">
+              <span className="text-white font-bold text-sm">{selectedProducts.length}</span>
+            </div>
+            <span className="text-sm font-bold text-amber-900 uppercase tracking-wide">
+              {selectedProducts.length} Product{selectedProducts.length > 1 ? 's' : ''} Selected
+            </span>
+          </div>
           <button
             onClick={handleBulkDelete}
-            className={SubmitBtn}
+            className="px-4 py-2 border-2 border-red-400 bg-red-100 hover:bg-red-200 text-red-900 font-semibold transition-colors flex items-center gap-2 uppercase tracking-wide text-sm"
           >
-            Delete Selected
+            <Trash2 className="w-4 h-4" />
+            Delete ({selectedProducts.length})
           </button>
         </div>
       )}
       
-      <ProductTable
-        itemsPerPage={9}
-        product={displayProducts}
-        columns={[
-          'select',
-          'product_image',
-          'sku-code',     
-          'product_name',
-          'description',
-          'category_id',
-          'action'
-        ]}
-        form={(product) => {
-          // Ensure product exists before rendering actions
-          if (!product) {
-            return null;
-          }
-          
-          const p = product as Product;
-          return (
-            <div className="flex items-center gap-2">
-              <Link 
-              className={EditIconBtn}
-              href={`/admin/products/components/productdetail/${p.product_id}`}>
-                {view}
-              </Link>
-              <DeleteProduct product={productData}/>
-            </div>
-          );
-        }}
-        onSelectionChange={(selected: any) => {
-          console.log("Selected products:", selected);
-          setSelectedProducts(selected);
-        }}
-      />
+      {/* Product Table */}
+      <div className="bg-white">
+        <ProductTable
+          itemsPerPage={8}
+          product={displayProducts}
+          columns={[
+            'select',
+            'product_image',
+            'sku-code',     
+            'product_name',
+            'description',
+            'category_id',
+            'action'
+          ]}
+          form={(product) => {
+            // Ensure product exists before rendering actions
+            if (!product) {
+              return null;
+            }
+            
+            const p = product as Product;
+            return (
+              <div className="flex items-center gap-5">
+                <Link 
+                  href={`/admin/products/components/productdetail/${p.product_id}`}
+                  className={ViewIconBtn}
+                  title="View Details"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                </Link>
+                <DeleteProduct product={p} />
+              </div>
+            );
+          }}
+          onSelectionChange={(selected: any) => {
+            console.log("Selected products:", selected);
+            setSelectedProducts(selected);
+          }}
+        />
+      </div>
+
     </div>
   );
 }

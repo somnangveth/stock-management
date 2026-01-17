@@ -123,7 +123,6 @@ export default function SaleTableB2C({
         "sale_id",
         "subtotal",
         "discount",
-        "tax",
         "total_price",
         "payment_method",
         "status",

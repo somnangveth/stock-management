@@ -1,3 +1,4 @@
+// app/admin/ledger/components/receipt-list.tsx
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -6,48 +7,45 @@ import { EnhancedLedger } from "@/type/membertype";
 import { fetchLedger } from "../action/ledger";
 import { fetchLedgerAlert, fetchLedgerAlertDetailed } from "../action/ledgeralert";
 import { LedgerAlert } from "@/type/duedateledger";
-import { AlertCircle, AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
-import UpdateLedgerForm from "./updateledgerform";
-import DeleteLedger from "./deleteledger";
+import { AlertCircle, AlertTriangle, ChevronDown, ChevronUp, Printer } from "lucide-react";
+import UpdateReceiptForm from "./updateledger";
+import DeleteReceipt from "./deleteledger";
 
-interface LedgerListProps {
+interface ReceiptListProps {
   refreshKey?: number;
   onDataLoaded?: (
     data: EnhancedLedger[],
     onSearch: (results: EnhancedLedger[]) => void,
     searchKeys: (keyof EnhancedLedger)[]
   ) => void;
-  onLedgerUpdated?: () => void;
-  onLedgerDeleted?: () => void;
+  onReceiptUpdated?: () => void;
+  onReceiptDeleted?: () => void;
 }
 
-export default function LedgerList({ 
+export default function ReceiptList({ 
   refreshKey = 0, 
   onDataLoaded,
-  onLedgerUpdated,
-  onLedgerDeleted,
-}: LedgerListProps) {
-  const [displayLedgers, setDisplayLedgers] = useState<EnhancedLedger[]>([]);
+  onReceiptUpdated,
+  onReceiptDeleted,
+}: ReceiptListProps) {
+  const [displayReceipts, setDisplayReceipts] = useState<EnhancedLedger[]>([]);
   const [alert, setAlert] = useState<LedgerAlert>({ 
     overSoonCount: 0, overdateCount: 0 });
   const [alertDetails, setAlertDetails] = useState<any>(null);
   const [showAlertDetails, setShowAlertDetails] = useState(false);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
-  // 搜索回调
   const handleSearchResults = useCallback((results: EnhancedLedger[]) => {
-    setDisplayLedgers(results);
+    setDisplayReceipts(results);
   }, []);
 
-  // 获取 Ledger 数据
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["ledgers", refreshKey],
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ["receipts", refreshKey],
     queryFn: async () => {
       const res = await fetchLedger();
       if (res.error) throw new Error(res.error);
 
       const list = res.data || [];
-      console.log("📊 Raw ledger data:", list);
 
       return list.map((item: any): EnhancedLedger => {
         const vendorName = item.vendor_name || "Unknown Vendor";
@@ -92,26 +90,24 @@ export default function LedgerList({
     },
   });
 
-  // 获取提示
   useEffect(() => {
     fetchLedgerAlert()
       .then(setAlert)
-      .catch((err) => console.error("Failed to fetch ledger alert:", err));
+      .catch((err: any) => console.error("Failed to fetch receipt alert:", err));
   }, [refreshKey]);
 
-  // 获取详细提示信息
   useEffect(() => {
     if (showAlertDetails) {
       fetchLedgerAlertDetailed()
         .then(setAlertDetails)
-        .catch((err) => console.error("Failed to fetch ledger alert details:", err));
+        .catch((err: any) => console.error("Failed to fetch receipt alert details:", err));
     }
   }, [showAlertDetails, refreshKey]);
 
-  // 当数据变化时更新显示
   useEffect(() => {
     if (!data) return;
-    setDisplayLedgers(data);
+    setDisplayReceipts(data);
+
 
     if (onDataLoaded) {
       const searchKeys: (keyof EnhancedLedger)[] = 
@@ -130,294 +126,232 @@ export default function LedgerList({
     setExpandedIds(newSet);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "overdue":
-        return { bg: "bg-white", border: "border-red-300", badge: "bg-red-100 text-red-700", accent: "text-red-600" };
-      case "low":
-        return { bg: "bg-white", border: "border-orange-300", badge: "bg-orange-100 text-orange-700", accent: "text-orange-600" };
-      case "medium":
-        return { bg: "bg-white", border: "border-yellow-300", badge: "bg-yellow-100 text-yellow-700", accent: "text-yellow-600" };
-      case "high":
-        return { bg: "bg-white", border: "border-gray-300", badge: "bg-gray-100 text-gray-700", accent: "text-gray-600" };
-      default:
-        return { bg: "bg-white", border: "border-gray-300", badge: "bg-gray-100 text-gray-700", accent: "text-gray-600" };
-    }
+  const handlePaymentSuccess = () => {
+    refetch();
   };
 
-  const getPaymentStatusColor = (status: string) => {
-    switch (status) {
-      case "paid":
-        return "text-green-700 bg-green-100";
-      case "unpaid":
-        return "text-red-700 bg-red-100";
-      case "partial":
-        return "text-orange-700 bg-orange-100";
-      default:
-        return "text-gray-700 bg-gray-100";
-    }
-  };
-
-  if (isLoading) return <p className="p-8 text-gray-500">Loading ledger records...</p>;
+  if (isLoading) return <p className=" w-full p-8 text-center text-slate-500">Loading...</p>;
 
   if (error)
     return (
-      <div className="p-8 text-red-500">
-        Failed to load ledger records: {
-        error instanceof Error ? error.message : "Unknown error"}
+      <div className="p-8 text-center">
+        <p className="text-red-600 mb-4">Failed to load receipt records</p>
         <button
           onClick={() => window.location.reload()}
-          className="ml-4 text-blue-600 hover:underline"
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
           Retry
         </button>
       </div>
     );
 
-  if (displayLedgers.length === 0) 
-    return 
-    <p className="p-8 text-gray-500">No ledger records found.</p>;
+  if (displayReceipts.length === 0) 
+    return <p className="p-8 text-center text-slate-500">No receipt records found.</p>;
 
   return (
-    <div className="space-y-6">
-      {/* 提醒卡片 */}
-      {(alert.overSoonCount > 0 || alert.overdateCount > 0) && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-3">
-              {alert.overdateCount > 0 && (
-                <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100">
-                    <AlertCircle className="h-4 w-4 text-red-600" />
+    <div className="min-h-screen bg-slate-50 p-6">
+      <div className="max-w-full mx-auto space-y-6">
+        
+        {/* Alert */}
+        {(alert.overSoonCount > 0 || alert.overdateCount > 0) && (
+          <div className="bg-linaer-to-r bg-red-50 to-red-100 rounded-xl p-6 border border-red-400 ">
+            <div className="flex items-start justify-between gap-6">
+              <div className="flex items-start gap-6">
+                {alert.overdateCount > 0 && (
+                  <div className="flex gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-1" />
+                    <div>
+                      <p className="font-semibold text-slate-900">{alert.overdateCount} Overdue</p>
+                      <p className="text-sm text-slate-600">Action needed</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-red-700">
-                      {alert.overdateCount} Overdue Payment{alert.overdateCount > 1 ? "s" : ""}
-                    </p>
-                    <p className="text-xs text-red-600">
-                      Immediate action required
-                    </p>
+                )}
+                {alert.overSoonCount > 0 && (
+                  <div className="flex gap-3">
+                    <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-1" />
+                    <div>
+                      <p className="font-semibold text-slate-900">{alert.overSoonCount} Due Soon</p>
+                      <p className="text-sm text-slate-600">Within 7 days</p>
+                    </div>
                   </div>
-                </div>
-              )}
-
-              {alert.overSoonCount > 0 && (
-                <div className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-100">
-                    <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-yellow-700">
-                      {alert.overSoonCount} Payment{alert.overSoonCount > 1 ? "s" : ""} Due Soon
-                    </p>
-                    <p className="text-xs text-yellow-600">
-                      Due within 7 days
-                    </p>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
+              <button
+                onClick={() => setShowAlertDetails(!showAlertDetails)}
+                className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+              >
+                {showAlertDetails ? "Hide" : "View"}
+              </button>
             </div>
 
-Jade peakz, [9/1/26 15:25 ]
-
-
-            <button
-              onClick={() => setShowAlertDetails(!showAlertDetails)}
-              className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline"
-            >
-              {showAlertDetails ? "Hide Details" : "View Details"}
-            </button>
+            {showAlertDetails && alertDetails && (
+              <div className="mt-4 pt-4 border-t border-slate-200">
+                {alertDetails.overdated.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-lg font-semibold text-amber-700 uppercase mb-2">Overdue</p>
+                    <div className="space-y-2">
+                      {alertDetails.overdated.map((item: any) => (
+                        <div key={item.ledger_id} className="flex justify-between text-sm text-slate-700">
+                          <span>{item.vendor_name}</span>
+                          <span className="font-semibold">${item.balance.toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {alertDetails.dueSoon.length > 0 && (
+                  <div>
+                    <p className="text-lg font-semibold text-red-600 uppercase mb-2">Due Soon</p>
+                    <div className="space-y-2">
+                      {alertDetails.dueSoon.map((item: any) => (
+                        <div key={item.ledger_id} className="flex justify-between text-sm text-slate-700">
+                          <span>{item.vendor_name}</span>
+                          <span className="font-semibold">${item.balance.toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
+        )}
 
-          {/* 详细信息展开 */}
-          {showAlertDetails && alertDetails && (
-            <div className="mt-4 border-t border-amber-200 pt-4">
-              {alertDetails.overdated.length > 0 && (
-                <div className="mb-4">
-                  <h4 className="mb-2 text-sm font-semibold text-red-700">Overdue Payments:</h4>
-                  <div className="space-y-2">
-                    {alertDetails.overdated.map((item: any) => (
-                      <div
-                        key={item.ledger_id}
-                        className="flex items-center justify-between rounded bg-red-50 p-2 text-sm"
-                      >
-                        <span className="font-medium text-red-900">{item.vendor_name}</span>
-                        <div className="flex gap-4 text-red-700">
-                          <span>Due: {new Date(item.payment_duedate).toLocaleDateString()}</span>
-                          <span className="font-semibold">${item.balance.toFixed(2)}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+        {/* Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+          {displayReceipts.map((receipt) => {
+            const isExpanded = expandedIds.has(receipt.ledger_id);
+            const daysUntilDue = receipt.payment_duedate
+              ? Math.ceil(
+                  (new Date(receipt.payment_duedate).getTime() - new Date().getTime()) /
+                    (1000 * 60 * 60 * 24)
+                )
+              : null;
 
-              {alertDetails.dueSoon.length > 0 && (
-                <div>
-                  <h4 className="mb-2 text-sm font-semibold text-yellow-700">Due Soon:</h4>
-                  <div className="space-y-2">
-                    {alertDetails.dueSoon.map((item: any) => (
-                      <div
-                        key={item.ledger_id}
-                        className="flex items-center justify-between rounded bg-yellow-50 p-2 text-sm"
-                      >
-                        <span className="font-medium text-yellow-900">{item.vendor_name}</span>
-                        <div className="flex gap-4 text-yellow-700">
-                          <span>In {item.daysUntilDue} days</span>
-                          <span className="font-semibold">${item.balance.toFixed(2)}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+            let statusColor = "slate";
+            let statusLabel = "Safe";
+            if (receipt.term_status === "overdue") {
+              statusColor = "red";
+              statusLabel = "Overdue";
+            } else if (receipt.term_status === "low") {
+              statusColor = "amber";
+              statusLabel = "Due Soon";
+            } else if (receipt.term_status === "medium") {
+              statusColor = "blue";
+              statusLabel = "Pending";
+            }
 
-      {/* 卡片式列表 */}
-      <div className="grid grid-cols-1 gap-4">
-        {displayLedgers.map((ledger) => {
-          const isExpanded = expandedIds.has(ledger.ledger_id);
-          const colors = getStatusColor(ledger.term_status);
-          const daysUntilDue = ledger.payment_duedate
-            ? Math.ceil(
-                (new Date(ledger.payment_duedate).getTime() - new Date().getTime()) /
-                  (1000 * 60 * 60 * 24)
-              )
-            : null;
-
-
-          return (
-            <div
-              key={ledger.ledger_id}
-              className={`rounded-lg border-2 transition-all ${colors.border} ${colors.bg} shadow-sm hover:shadow-md`}
-            >
-              {/* 卡片头部 */}
-              <div className="p-4">
-                <div className="flex items-start justify-between gap-4">
-                  {/* 左侧：供应商信息 */}
+            return (
+              <div
+                key={receipt.ledger_id}
+                className="bg-white rounded-xl border-2 border-amber-100 overflow-hidden hover:border-yellow-500 transition-all hover:shadow-sm"
+              >
+                {/* Header */}
+                <div className="px-6 py-5 border-b border-slate-100 flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">{ledger.vendor_name}
-                      </h3>
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-medium ${ledger.source_type === "purchase"
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-green-100 text-green-700"
-                        }`}
-                      >
-                        {ledger.source_type === "purchase" ? "Purchase" : "Refund"}
-                      </span>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${colors.badge}`}>
-                        {ledger.term_status === "overdue"
-                          ? "Overdue"
-                          : ledger.term_status === "low"
-                          ? "Due Soon"
-                          : ledger.term_status === "medium"
-                          ? "Medium"
-                          : "Safe"}
-                      </span>
-                    </div>
-
-                    <p className="text-sm text-gray-600">
-                      Created: {new Date(ledger.created_at).toLocaleDateString()}
-                      {ledger.payment_duedate && (
-                        <>
-                          {" "} • Due: {new Date(ledger.payment_duedate).toLocaleDateString()}
-                          {daysUntilDue !== null && (
-                            <>
-                              {" "}
-                              <span
-                                className={
-                                  daysUntilDue < 0
-                                    ? "text-red-600 font-semibold"
-                                    : daysUntilDue <= 7
-                                    ? "text-orange-600 font-semibold"
-                                    : "text-gray-600"
-                                }
-                              >
-                                ({daysUntilDue < 0 ? `${Math.abs(daysUntilDue)} days overdue` : `${daysUntilDue} days remaining`})
-                              </span>
-                            </>
-                          )}
-                        </>
-                      )}
-                    </p>
+                    <h3 className="text-lg font-semibold text-slate-900">{receipt.vendor_name}</h3>
+                    <p className="text-xs text-slate-500 mt-1">{receipt.ledger_id}</p>
                   </div>
-
-                  {/* 右侧：金额 & 按钮 */}
-                  <div className="text-right flex flex-col items-end gap-3">
-                    <div className="space-y-1">
-                      <div className="text-sm text-gray-600">
-                        Total: <span className="text-lg font-bold text-blue-600">${
-                        ledger.debit.toFixed(2)
-                        }</span>
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        Paid: <span className="text-lg font-bold text-green-600">${
-                        ledger.credit.toFixed(2)}</span>
-                      </div>
-                      <div className={`text-sm font-semibold ${ledger.balance > 0 ? "text-red-600" : "text-gray-400"}`}>
-                        Balance: ${
-                        ledger.balance.toFixed(2)}
-                      </div>
-                    </div>
-
-Jade peakz, [9/1/26 15:25 ]
-
-
-                    {/* 操作按钮 */}
-                    <div className="flex gap-2">
-                      <UpdateLedgerForm
-                        ledger={ledger}
-                        onSuccess={onLedgerUpdated}
-                      />
-                      <DeleteLedger
-                        ledger_id={ledger.ledger_id}
-                        vendor_name={ledger.vendor_name}
-                        onSuccess={onLedgerDeleted}
-                      />
-                    </div>
-                  </div>
-
-                  {/* 展开按钮 */}
-                  {ledger.note && (
-                    <button
-                      onClick={() => toggleExpand(ledger.ledger_id)}
-                      className="text-gray-500 hover:text-gray-700 transition"
-                    >
-                      {isExpanded ? (
-                        <ChevronUp className="w-5 h-5" />
-                      ) : (
-                        <ChevronDown className="w-5 h-5" />
-                      )}
-                    </button>
-                  )}
+                  <button
+                    onClick={() => window.print()}
+                    className="p-2 rounded-lg hover:bg-slate-100 transition text-slate-600"
+                    title="Print"
+                  >
+                    <Printer className="w-4 h-4" />
+                  </button>
                 </div>
 
-                {/* 付款状态 */}
-                <div className="mt-3 flex items-center gap-2">
-                  <span className="text-sm text-gray-600">Payment Status:</span>
-                  <span
-                    className={`px-2 py-1 rounded text-xs font-medium ${getPaymentStatusColor(ledger.payment_status)}`}
-                  >
-                    {ledger.payment_status.charAt(0).toUpperCase() + ledger.payment_status.slice(1)}
-                  </span>
+                {/* Content */}
+                <div className="px-6 py-5 space-y-5">
+                  
+                  {/* Info Grid */}
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <p className="text-slate-600 text-xs mb-1">Created</p>
+                      <p className="font-medium text-slate-900">{new Date(receipt.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-600 text-xs mb-1">Due</p>
+                      <p className="font-medium text-slate-900">{receipt.payment_duedate ? new Date(receipt.payment_duedate).toLocaleDateString() : "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-600 text-xs mb-1">Days</p>
+                      <p className={`font-medium ${daysUntilDue && daysUntilDue < 0 ? "text-red-600" : "text-slate-900"}`}>
+                        {daysUntilDue !== null ? (daysUntilDue < 0 ? `-${Math.abs(daysUntilDue)}` : daysUntilDue) : "—"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Status Badges */}
+                  <div className="flex gap-2 flex-wrap">
+                    <span className={`px-3 py-1.5 rounded-full text-xs font-medium ${
+                      statusColor === "red" ? "bg-red-50 text-red-700" :
+                      statusColor === "amber" ? "bg-amber-50 text-amber-700" :
+                      statusColor === "blue" ? "bg-blue-50 text-blue-700" :
+                      "bg-slate-100 text-slate-700"
+                    }`}>
+                      {statusLabel}
+                    </span>
+                    <span className={`px-3 py-1.5 rounded-full text-xs font-medium ${
+                      receipt.payment_status === "paid" ? "bg-emerald-50 text-emerald-700" :
+                      receipt.payment_status === "unpaid" ? "bg-red-50 text-red-700" :
+                      "bg-amber-50 text-amber-700"
+                    }`}>
+                      {receipt.payment_status === "paid" ? "Paid" : receipt.payment_status === "unpaid" ? "Unpaid" : "Partial"}
+                    </span>
+                    <span className={`px-3 py-1.5 rounded-full text-xs font-medium ${
+                      receipt.source_type === "purchase" ? "bg-indigo-50 text-indigo-700" : "bg-teal-50 text-teal-700"
+                    }`}>
+                      {receipt.source_type === "purchase" ? "Purchase" : "Refund"}
+                    </span>
+                  </div>
+
+                  {/* Amounts - 完整的费用信息 */}
+                  <div className="bg-slate-50 rounded-lg p-4 space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-600">Total Amount</span>
+                      <span className="font-semibold text-slate-900">${receipt.debit.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-600">Amount Paid</span>
+                      <span className="font-semibold text-emerald-600">${receipt.credit.toFixed(2)}</span>
+                    </div>
+                    <div className="border-t border-slate-200 pt-3 flex justify-between">
+                      <span className="font-semibold text-slate-900">Remaining Balance</span>
+                      <span className={`text-lg font-semibold ${receipt.balance > 0 ? "text-red-600" : "text-emerald-600"}`}>
+                        ${receipt.balance.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Notes */}
+                {receipt.note && (
+                  <div className="border-t border-slate-100">
+                    <button
+                      onClick={() => toggleExpand(receipt.ledger_id)}
+                      className="w-full px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition text-sm font-medium text-slate-900"
+                    >
+                      <span>Notes</span>
+                      {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                    </button>
+                    {isExpanded && (
+                      <div className="px-6 pb-4 text-sm text-slate-700 bg-slate-50 border-t border-slate-100">
+                        {receipt.note}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Footer - 添加快速付款按钮 */}
+                <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex gap-2 justify-end">
+                  <UpdateReceiptForm receipt={receipt} onSuccess={onReceiptUpdated} />
+                  <DeleteReceipt receipt_id={receipt.ledger_id} vendor_name={receipt.vendor_name} onSuccess={onReceiptDeleted} />
                 </div>
               </div>
-
-              {/* 展开详情 - 备注 */}
-              {isExpanded && ledger.note && (
-                <div className="border-t border-gray-200 px-4 py-3 bg-gray-50">
-                  <p className="text-sm font-semibold text-gray-700 mb-1">Note:</p>
-                  <p className="text-sm text-gray-600">{ledger.note}</p>
-                </div>
-              )}
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );

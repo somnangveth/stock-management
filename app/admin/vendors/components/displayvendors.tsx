@@ -4,7 +4,6 @@ import MemberTable from "@/app/components/tables/membertable";
 import { fetchVendors } from "@/app/functions/admin/api/controller";
 import { Vendors } from "@/type/producttype";
 import { useQuery } from "@tanstack/react-query";
-import { Divide } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
@@ -49,11 +48,13 @@ export default function DisplayVendors({
   if (error || !vendors) 
   {
     return(
-    <button
-    onClick={() => window.location.reload()}
-    className="ml-4 text-blue-600 hover:underline">
+      <button
+        onClick={() => window.location.reload()}
+        className="ml-4 text-yellow-600 hover:underline"
+      >
         Retry
-  </button>);
+      </button>
+    );
   }
 
   if(displayVendors.length === 0){
@@ -65,10 +66,11 @@ export default function DisplayVendors({
         </div>
     )
   }
+
   return (
     <div className="mt-10">
       <MemberTable
-      itemsPerPage={5}
+        itemsPerPage={5}
         members={displayVendors}
         columns={[
           "vendor_id",
@@ -77,18 +79,17 @@ export default function DisplayVendors({
           "contact_person",
           "action"
         ]}
-
-        form={(vendor) =>{
-          const v = vendor as Vendors;
+        form={(vendor) => {
+          const v = vendor as unknown as Vendors;
           return(
             <div>
+              {/* ✅ 修复：正确的路由 - 不要包含 [id] */}
               <Link href={`/admin/vendors/${v.vendor_id}`}>
-              {view}
+                {view}
               </Link>
             </div>
           )
-        }
-        }
+        }}
       />
     </div>
   );

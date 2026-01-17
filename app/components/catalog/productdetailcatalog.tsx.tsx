@@ -5,52 +5,52 @@ import {
   Categories,
   Price,
   Product,
-  Subcategories,
   Vendors,
 } from "@/type/producttype";
 import Barcode from "react-barcode";
 import Image from "next/image";
-import UpdatePriceFormB2B from "@/app/admin/price/components/b2b/updatepriceformb2b";
-import UpdatePriceFormB2C from "@/app/admin/price/components/b2c/updateform";
 import UpdateForm from "@/app/admin/products/components/product/updateform";
 import UpdateAttributeForm from "@/app/admin/products/components/attribute/updateattributeform";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import DeleteProduct from "@/app/admin/products/components/product/deleteproduct";
+import { edit, EditIconBtn } from "../ui";
+import UpdateProductBasicInfo from "@/app/admin/products/components/product/updateproduct";
+import UpdateBasicForm from "@/app/admin/products/components/product/updatebasicform";
+
+type ProductAttribute = {
+  attribute_id: string;
+  attribute_name: string;
+  module: string;
+  value: number;
+  price_value: number;
+};
 
 type Props = {
   product: Product;
-  price: Price;
-  attribute: Attribute[];
-
-
+  attribute: ProductAttribute[];
   categories: Categories[];
-  subcategories: Subcategories[];
   vendors: Vendors[];
-
   category: Categories;
-  subcategory: Subcategories;
-  vendor: Vendors;
+  role?: "admin" | "staff"; // Add role prop
 };
 
 export default function ProductDetailCatalog({
   product,
-  price,
   attribute,
-
   categories,
-  subcategories,
   vendors,
-
   category,
-  subcategory,
-  vendor,
+  role = "admin", // Default to admin if not provided
 }: Props) {
   const createdAt = new Date(product.created_at)
     .toISOString()
     .split("T")[0];
 
-    const router = useRouter();
+  const router = useRouter();
+
+  // Determine base path based on role
+  const basePath = role === "admin" ? "/admin" : "/staff";
 
   return (
     <>
@@ -93,87 +93,59 @@ export default function ProductDetailCatalog({
           <h2 className="text-lg font-semibold border-b pb-2">
             Basic Information
           </h2>
-            <UpdateForm
+            <UpdateBasicForm
             product={product}
             categories={categories}
-            subcategories={subcategories}
             vendors={vendors}
           />
 
           <InfoRow label="Product Name" value={product.product_name} />
           <InfoRow label="SKU Code" value={product.sku_code} />
-          <InfoRow label="Category" value={category.category_name} />
-          <InfoRow label="Subcategory" value={subcategory.subcategory_name} />
-          <InfoRow label="Vendor" value={vendor.vendor_name} />
           <InfoRow label="Package Type" value={product.package_type} />
           <InfoRow label="Description" value={product.description} />
           <InfoRow label="Created At" value={createdAt} />
         </section>
+        
+
+        <section className="space-y-2">
+  <h2 className="text-lg font-semibold border-b">Vendors</h2>
+
+  {vendors.length > 0 ? (
+    vendors.map((v) => (
+      <InfoRow
+        key={v.vendor_id}
+        label="Vendor"
+        value={v.vendor_name}
+      />
+    ))
+  ) : (
+    <p className="text-sm text-gray-500">No vendors linked</p>
+  )}
+</section>
 
         {/* Attributes */}
-        <section className="space-y-2">
-          <h2 className="text-lg font-semibold border-b">
-            Attributes
-          </h2>
+<section className="space-y-2">
+  <h2 className="flex justify-between items-center text-lg font-semibold border-b">
+    Attributes 
+    <button
+    onClick={()=> router.push(`${basePath}/attribute/components/attributedetail/${product.product_id}`)}>
+      {edit}
+    </button>
+    </h2>
 
-            <UpdateAttributeForm attributes={attribute}/>
+  {attribute.length > 0 ? (
+    attribute.map((a) => (
+      <InfoRow
+        key={a.attribute_id}
+        label={`${a.attribute_name} (${a.module})`}
+        value={`Value: ${a.value} | Price: $${a.price_value}`}
+      />
+    ))
+  ) : (
+    <p className="text-sm text-gray-500">No attributes available</p>
+  )}
+</section>
 
-          {attribute.length > 0 ? (
-            attribute.map((a) => (
-              <InfoRow
-                key={a.attribute_id}
-                label={a.attribute_name}
-                value={a.value}
-              />
-            ))
-          ) : (
-            <p className="text-sm text-gray-500">No attributes available</p>
-          )}
-        </section>
-
-        {/* Price */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold border-b pb-2">
-            Price Information
-          </h2>
-
-          {price.total_amount && (
-            <>
-              <p className="font-semibold">General Customer</p>
-                <UpdatePriceFormB2C priceData={price} />
-              <InfoRow label="Sale Price" value={String(price.total_amount)} />
-            </>
-          )}
-
-          {price.discount ? (
-            <>
-              <InfoRow label="Sale Price" value={String(price.discount)} />
-            </>
-          ):(
-            <>
-              <InfoRow label="Discount" value="0" />
-            </>
-          )}
-
-          {price.b2b_price && (
-            <>
-              <p className="font-semibold">Dealer</p>
-                <UpdatePriceFormB2B priceData={price} />
-              <InfoRow label="Sale Price" value={String(price.b2b_price)} />
-            </>
-          )}
-
-          {price.discount ? (
-            <>
-              <InfoRow label="Sale Price" value={String(price.discount)} />
-            </>
-          ):(
-            <>
-              <InfoRow label="Discount" value="0" />
-            </>
-          )}
-
-        </section>
       </div>
     </div>
     </>

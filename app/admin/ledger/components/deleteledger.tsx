@@ -1,6 +1,7 @@
+// app/admin/ledger/components/delete-receipt.tsx
 "use client";
 
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,43 +12,40 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { btnStyle, DeleteBtn, DeleteIconBtn, trash } from "@/app/components/ui";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import { Button } from "@/components/ui/button";
+import { Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { deleteLedger } from "../action/ledger";
-import {Button} from "@/components/ui/button";
 
-interface DeleteLedgerProps {
-  ledger_id: string;
+interface DeleteReceiptProps {
+  receipt_id: string;
   vendor_name: string;
   onSuccess?: () => void;
 }
 
-export default function DeleteLedger({
-  ledger_id,
+export default function DeleteReceipt({
+  receipt_id,
   vendor_name,
   onSuccess,
-}: DeleteLedgerProps) {
-  const [open, setOpen] = useState(false);
+}: DeleteReceiptProps) {
   const [isPending, startTransition] = useTransition();
 
   const handleDelete = () => {
     startTransition(async () => {
       try {
-        const result = await deleteLedger(ledger_id);
+        const result = await deleteLedger(receipt_id);
 
         if (result.error) {
-          toast.error("Failed to delete ledger", {
+          toast.error("Failed to delete receipt", {
             description: result.error,
           });
           return;
         }
 
-        toast.success("Ledger deleted successfully");
-        setOpen(false);
+        toast.success("Receipt deleted successfully");
         onSuccess?.();
       } catch (err: any) {
-        toast.error("Failed to delete ledger", {
+        toast.error("Failed to delete receipt", {
           description: err?.message,
         });
       }
@@ -55,39 +53,36 @@ export default function DeleteLedger({
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
+    <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button
           variant="ghost"
           size="sm"
-          className={DeleteIconBtn}
+          className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
         >
-          {trash}
+          <Trash2 className="h-4 w-4" />
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete Ledger Entry</AlertDialogTitle>
+          <AlertDialogTitle>Delete Receipt</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete this ledger entry for{" "}
-            <strong>{vendor_name}</strong>? This action cannot be undone.
+            Are you sure you want to delete this receipt from{" "}
+            <span className="font-semibold text-slate-900">{vendor_name}</span>?
+            This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <div className="flex gap-2 justify-end">
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+        <div className="flex gap-3 justify-end">
+          <AlertDialogCancel disabled={isPending}>
+            Cancel
+          </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
             disabled={isPending}
             className="bg-red-600 hover:bg-red-700"
           >
-            {isPending ? (
-              <>
-                <AiOutlineLoading3Quarters className="animate-spin mr-2" />
-                Deleting...
-              </>
-            ) : (
-              "Delete"
-            )}
+            {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            {isPending ? "Deleting..." : "Delete"}
           </AlertDialogAction>
         </div>
       </AlertDialogContent>

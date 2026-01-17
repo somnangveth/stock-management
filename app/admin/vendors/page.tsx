@@ -5,6 +5,7 @@ import VendorForm from "./components/vendorform";
 import { useCallback, useState } from "react";
 import SearchBar from "@/app/components/searchbar";
 import { Vendors } from "@/type/producttype";
+import { btnStyle } from "@/app/components/ui";
 
 
 export default function VendorPage(){
@@ -32,7 +33,7 @@ export default function VendorPage(){
     }, []);
     
     return(
-        <div className="space-y-6 p-6">
+        <div className="space-y-6 p-6 bg-white">
             {searchConfig && (
                 <SearchBar
                 data={vendors}
@@ -45,6 +46,7 @@ export default function VendorPage(){
                 <VendorForm onVendorAdded={handleProductAdded}/>
             </div>
             <div className="mt-10">
+                
                 <DisplayVendors refreshKey={refreshKeys} onDataLoaded={registerSearch}/>
             </div>
         </div>

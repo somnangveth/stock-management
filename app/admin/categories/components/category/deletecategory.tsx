@@ -14,7 +14,7 @@ export default function DeleteCategoryForm({category}:{category: Categories}){
 
     async function handleDelete(){
         try{
-            const result = await deleteCategory(category.category_id);
+            const result = await deleteCategory(String(category.category_id));
 
             if(!result){
                 console.error('Failed to delete');

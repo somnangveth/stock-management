@@ -8,12 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronLeft, ChevronRight, Check, Loader2 } from "lucide-react";
-import ProfileButton from "@/app/components/image/components/profilebutton";
+import ProfileButton from "@/app/components//image/components/profilebutton";
 import { createVendor } from "../actions/vendor";
 import { convertBlobUrlToFile } from "@/app/components/image/actions/image";
 import { uploadImage } from "@/app/components/image/actions/upload";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { btnStyle } from "@/app/components/ui";
 
 // Step-based validation schemas
 const step1Schema = z.object({
@@ -48,7 +49,11 @@ const FormSchema = z.object({
   vendor_image: z.string().optional(),
 });
 
-export default function CreateVendors({onSuccess}:{onSuccess?:()=>void}) {
+interface CreateVendorsProps {
+  onSuccess?: () => void;
+}
+
+export default function CreateVendors({ onSuccess }: CreateVendorsProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [isPending, startTransition] = useTransition();
@@ -148,31 +153,71 @@ export default function CreateVendors({onSuccess}:{onSuccess?:()=>void}) {
 
   // Submit form
   const onSubmit = (data: z.infer<typeof FormSchema>) => {
+    console.log("📤 Form submitted:", data);
+
     startTransition(async () => {
       try {
+        let submitData = { ...data };
+
+        // Upload image if exists
         if (imageUrls.length > 0) {
-          const file = await convertBlobUrlToFile(imageUrls[0]);
-          const { imageUrl } = await uploadImage({
-            file,
-            bucket: "images/profiles",
-          });
-          data.vendor_image = imageUrl;
+          try {
+            const file = await convertBlobUrlToFile(imageUrls[0]);
+            const { imageUrl } = await uploadImage({
+              file,
+              bucket: "images/profiles",
+            });
+            submitData.vendor_image = imageUrl;
+            console.log("✅ Image uploaded:", imageUrl);
+          } catch (imageError) {
+            console.error("❌ Image upload failed:", imageError);
+            toast.error("Failed to upload image");
+            return;
+          }
         }
 
-        const result = await createVendor(data);
-        const parsed = typeof result === "string" ? JSON.parse(result) : result;
+        console.log("🚀 Sending to server:", submitData);
 
-        if (parsed?.error) {
-          toast.error(parsed.error || "Failed to create vendor");
-        } else {
+        const result = await createVendor(submitData);
+        console.log("📦 Result:", result);
+
+        // ✅ 处理响应
+        if (!result) {
+          console.error("❌ No response from server");
+          toast.error("No response from server");
+          return;
+        }
+
+        if (result.success === false) {
+          console.error("❌ Server error:", result.error);
+          toast.error(result.error || "Failed to create vendor");
+          return;
+        }
+
+        if (result.success === true) {
+          console.log("✅ Success:", result.data);
           toast.success("Vendor created successfully");
+          
+          // Reset form and state
           form.reset();
           setImageUrls([]);
           setCurrentStep(1);
-          onSuccess?.();
+
+          // Call success callback after a delay
+          setTimeout(() => {
+            if (onSuccess) {
+              console.log("🔄 Calling onSuccess callback");
+              onSuccess();
+            }
+          }, 800);
+          return;
         }
+
+        console.error("❌ Unexpected response format:", result);
+        toast.error("Unexpected response from server");
+        
       } catch (error) {
-        console.error("Create vendor error:", error);
+        console.error("Client error:", error);
         toast.error("An unexpected error occurred");
       }
     });
@@ -183,6 +228,7 @@ export default function CreateVendors({onSuccess}:{onSuccess?:()=>void}) {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-semibold">Add New Vendor</h2>
       </div>
+
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         {/* Progress Steps */}
@@ -220,9 +266,6 @@ export default function CreateVendors({onSuccess}:{onSuccess?:()=>void}) {
                 <p className="text-red-500 text-xs mt-1">{form.formState.errors.vendor_id.message}</p>
               )}
             </div>
-
-Jade peakz, [9/1/26 15:37 ]
-
 
             <div>
               <label className="text-sm font-medium block mb-1">Vendor Name *</label>
@@ -278,6 +321,8 @@ Jade peakz, [9/1/26 15:37 ]
           </div>
         )}
 
+
+
         {/* STEP 2: Contact Details */}
         {currentStep === 2 && (
           <div className="space-y-3">
@@ -314,9 +359,6 @@ Jade peakz, [9/1/26 15:37 ]
                 <p className="text-red-500 text-xs mt-1">{form.formState.errors.address.message}</p>
               )}
             </div>
-
-Jade peakz, [9/1/26 15:37 ]
-
 
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -371,6 +413,7 @@ Jade peakz, [9/1/26 15:37 ]
               />
             </div>
 
+
             <div>
               <label className="text-sm font-medium block mb-1">Notes</label>
               <textarea
@@ -405,13 +448,16 @@ Jade peakz, [9/1/26 15:37 ]
             </button>
           ) : (
             <button
-              type="submit"
-              disabled={isPending}
-              className="px-4 py-2 text-sm bg-amber-700 text-white rounded-md hover:bg-amber-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-              {isPending ? "Creating..." : "Create Vendor"}
-            </button>
+                        type="submit"
+                        disabled={isPending}
+                        className={btnStyle}
+                      >
+                        {isPending ? (
+                          "Updating..."
+                        ): (
+                          "Update Admin"
+                        )}
+                      </button>
           )}
         </div>
       </form>

@@ -123,3 +123,28 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* globals.css or toast.css */
+.toast-success {
+  background-color: #16a34a !important;
+  color: white !important;
+  border: none !important;
+}
+
+.toast-error {
+  background-color: #dc2626 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.toast-warning {
+  background-color: #eab308 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.toast-success *,
+.toast-error *,
+.toast-warning * {
+  color: white !important;
+}

@@ -28,9 +28,7 @@ export type AddSalesDataB2B = {
 export type AddSalesDataB2C = {
     general_customer_type: "walk_in" | "online";
     payment_method: "cash" | "card" | "bank-transfer";
-    discount: number;
     customertype: "General";
-    tax: number;
     process_status: string;
     subtotal: number;
     total: number;
@@ -39,8 +37,6 @@ export type AddSalesDataB2C = {
         quantity: number;
         unit_price: number;
         subtotal: number;
-        discount: number;
-        tax: number;
         total: number;
     }>;
 };
@@ -323,16 +319,12 @@ export async function addSalesB2C(data: AddSalesDataB2C){
         if(data.general_customer_type === "online"){
             saleDataToInsert = {
             subtotal: Math.round(data.subtotal * 100) / 100,
-            tax_amount: Math.round(data.tax * 100) / 100,
-            discount_amount: Math.round(data.discount * 100) /100,
             total_amount: Math.round(data.total * 100)/100,
             payment_method: data.payment_method,
         }
         }else if(data.general_customer_type === "walk_in"){
             saleDataToInsert = {
             subtotal: Math.round(data.subtotal * 100) / 100,
-            tax_amount: Math.round(data.tax * 100) / 100,
-            discount_amount: Math.round(data.discount * 100) /100,
             total_amount: Math.round(data.total * 100)/100,
             payment_method: data.payment_method,
             process_status: "completed",

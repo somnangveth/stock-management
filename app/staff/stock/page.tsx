@@ -53,18 +53,20 @@ export default function StockPage() {
       {/* Expiry Alert Button */}
       <div className="flex justify-end">
       </div>
-            
+
       <div className="grid grid-cols-3 gap-2">
         <TotalStockPanel />
         <IssuedStockPanel />
         <ExpiryStockPanel />
       </div>
-
-      <button
-      className={DeleteIconBtn}
-              onClick={() => router.push("/staff/stock/components/expirypanel")}>
-                {questionMark}
-      </button>
+      <div className="text-lg text-red bg-transparent">
+        
+        <button
+        className={DeleteIconBtn}
+        onClick={() => router.push("/admin/stock/components/expirypanel")}>
+          {questionMark}
+        </button>
+      </div>
       <ProductList
         refreshKey={refreshKeys}
         onDataLoaded={registerSearch} />

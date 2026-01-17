@@ -1,6 +1,7 @@
 "use server";
 
 import { createSupabaseAdmin } from "@/lib/supbase/action";
+import { revalidatePath } from "next/cache";
 
 export async function addIssueProduct(
   batch_id: string,
@@ -15,7 +16,7 @@ export async function addIssueProduct(
 ) {
   const supabase = await createSupabaseAdmin();
 
-  // 1️. Get current stock
+  // 1️⃣ Get current stock from stock_alert
   const { data: stock, error: stockError } = await supabase
     .from("stock_alert")
     .select("current_quantity")
@@ -27,28 +28,50 @@ export async function addIssueProduct(
     throw new Error("Insufficient stock");
   }
 
-  // 2️. Get product price
+  // 2️⃣ Get batch quantity_remaining
+  const { data: batch, error: batchError } = await supabase
+    .from("product_batches")
+    .select("quantity_remaining")
+    .eq("batch_id", batch_id)
+    .single();
+
+  if (batchError) throw batchError;
+  if (!batch || batch.quantity_remaining < data.quantity) {
+    throw new Error("Insufficient quantity in batch");
+  }
+
+  // 3️⃣ Get product price
   const { data: price, error: priceError } = await supabase
     .from("prices")
     .select("base_price")
     .eq("price_id", price_id)
-    .not("total_amount", "is", null )
+    .not("total_amount", "is", null)
     .maybeSingle();
 
   if (priceError) throw priceError;
+  if (!price) throw new Error("Price not found");
 
-  const newQuantity = stock.current_quantity - data.quantity;
-  const costLoss = price?.base_price * data.quantity;
+  const newStockQuantity = stock.current_quantity - data.quantity;
+  const newBatchQuantity = batch.quantity_remaining - data.quantity;
+  const costLoss = price.base_price * data.quantity;
 
-  // 3️⃣ Update stock
-  const { error: updateError } = await supabase
+  // 4️⃣ Update stock_alert
+  const { error: updateStockError } = await supabase
     .from("stock_alert")
-    .update({ current_quantity: newQuantity })
+    .update({ current_quantity: newStockQuantity })
     .eq("stock_alert_id", stock_alert_id);
 
-  if (updateError) throw updateError;
+  if (updateStockError) throw updateStockError;
 
-  // 4️⃣ Insert stock movement
+  // 5️⃣ Update product_batches quantity_remaining
+  const { error: updateBatchError } = await supabase
+    .from("product_batches")
+    .update({ quantity_remaining: newBatchQuantity })
+    .eq("batch_id", batch_id);
+
+  if (updateBatchError) throw updateBatchError;
+
+  // 6️⃣ Insert stock movement
   const { error: movementError } = await supabase
     .from("stock_movement")
     .insert({
@@ -56,12 +79,18 @@ export async function addIssueProduct(
       batch_id,
       movement_type: data.movement_type,
       quantity: data.quantity,
+      quantity_remaining: newBatchQuantity, // Use batch's remaining, not stock_alert's
       cost_loss: costLoss,
       notes: data.notes,
     });
 
   if (movementError) throw movementError;
+
+  // Revalidate the stock page to show updated data
+  revalidatePath("/admin/stock");
 }
+
+
 
 
 

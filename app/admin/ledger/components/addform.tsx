@@ -1,11 +1,14 @@
+
+// app/admin/ledger/components/receipt-form.tsx
 "use client";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
+
+import { useForm, useFieldArray } from "react-hook-form";
 import { toast } from "sonner";
 import { useTransition, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createLedger } from "../action/ledger";
+import { fetchVendors } from "@/app/functions/admin/api/controller";
+import { fetchProductByVendor } from "@/app/functions/admin/stock/product/vendor";
 import {
   Form,
   FormControl,
@@ -16,7 +19,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { btnStyle } from "@/app/components/ui";
 import {
   Select,
   SelectContent,
@@ -24,7 +26,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
 import {
   Dialog,
   DialogContent,
@@ -32,115 +33,88 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Loader2, AlertCircle } from "lucide-react";
-import { PurchaseOrder } from "@/type/producttype";
+import { Plus, Loader2, Receipt, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fetchPurchaseOrders } from "../../purchase/action/purchaseorder";
+import { btnStyle } from "@/app/components/ui";
 
-/* ================= Schema ================= */
-
-const LedgerFromPurchaseSchema = z
-  .object({
-    purchase_id: z.string().min(1, "Please select a purchase order"),
-    debit: z.number().min(0.01, "Amount must be greater than 0"),
-    credit: z.number().min(0),
-    payment_duedate: z.string().optional(),
-    payment_status: z.enum(["paid", "unpaid", "partial"]),
-    note: z.string().optional(),
-  })
-  .refine((data) => data.credit <= data.debit, {
-    message: "Amount Paid cannot exceed Total Amount",
-    path: ["credit"],
-  });
-
-type LedgerFromPurchaseValues = z.infer<typeof LedgerFromPurchaseSchema>;
-
-interface LedgerFromPurchaseProps {
-  onLedgerAdded?: () => void;
-  onSuccess?:() => void;
+interface ReceiptFormProps {
+  onReceiptAdded?: () => void;
 }
 
-/* ================= Component ================= */
-
-export default function LedgerFromPurchase({
-  onSuccess,
-  onLedgerAdded,
-}: LedgerFromPurchaseProps) {
+export default function ReceiptForm({ onReceiptAdded }: ReceiptFormProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const [selectedPurchaseId, setSelectedPurchaseId] = useState<string | null>(
-    null
-  );
-  const [error, setError] = useState<string | null>(null);
+  const [selectedVendorId, setSelectedVendorId] = useState<number | null>(null);
 
-  /* -------- Fetch Purchase Orders -------- */
-  const { data: purchaseOrders = [], isLoading: poLoading } = useQuery<
-    PurchaseOrder[]
-  >({
-    queryKey: ["purchase-orders"],
-    queryFn: async () => {
-      const result = await fetchPurchaseOrders();
-      if (result.error) throw new Error(result.error);
-      return result.data || [];
-    },
+  const { data: vendors = [], isLoading: vendorsLoading } = useQuery({
+    queryKey: ["vendors"],
+    queryFn: fetchVendors,
   });
 
-  /* -------- Form -------- */
-  const form = useForm<LedgerFromPurchaseValues>({
-    resolver: zodResolver(LedgerFromPurchaseSchema),
+  // ✅ 根据选中的 vendor 获取产品
+  const { data: vendorProducts = [], isLoading: productsLoading } = useQuery({
+    queryKey: ["products", selectedVendorId],
+    queryFn: () => fetchProductByVendor(selectedVendorId!),
+    enabled: !!selectedVendorId, // 只有选了 vendor 才查询
+  });
+
+  const form = useForm({
     defaultValues: {
-      purchase_id: "",
-      debit: 0,
-      credit: 0,
+      vendor_id: "",
+      receipt_number: "",
+      receipt_date: new Date().toISOString().split("T")[0],
       payment_duedate: "",
-      payment_status: "unpaid",
+      payment_status: "pending",
       note: "",
+      amount_paid: 0,
+      items: [
+        {
+          product_id: "",
+          quantity: 1,
+          unit_price: 0,
+        },
+      ],
     },
   });
 
-  /* -------- Watches -------- */
-  const purchaseId = form.watch("purchase_id");
-  const debit = form.watch("debit");
-  const credit = form.watch("credit");
-  const dueDate = form.watch("payment_duedate");
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "items",
+  });
 
-  /* -------- Get Selected Purchase -------- */
-  const selectedPurchase = useMemo(() => {
-    if (!purchaseId) return null;
-    return purchaseOrders.find((po) => po.purchase_id === purchaseId);
-  }, [purchaseId, purchaseOrders]);
+  const items = form.watch("items");
+  const amountPaid = Number(form.watch("amount_paid") || 0);
 
-  /* -------- Auto-fill from Purchase -------- */
-  const handlePurchaseChange = (poId: string) => {
-    const po = purchaseOrders.find((p) => p.purchase_id === poId);
-    if (po) {
-      setSelectedPurchaseId(poId);
-      form.setValue("purchase_id", poId);
-      form.setValue("debit", po.total_amount);
-      form.setValue("credit", 0);
-      form.setValue("note", `From Purchase Order: ${po.po_number}`);
-      setError(null);
+  const subtotal = items.reduce((sum, item) => {
+    return sum + (item.quantity || 0) * (item.unit_price || 0);
+  }, 0);
+  const total = subtotal;
+  const remaining = total - amountPaid;
+
+  const getProductAttributes = (productId: string | undefined) => {
+    if (!productId) return [];
+    const product = vendorProducts.find((p: any) => p.product_id === productId);
+  };
+
+  const handleProductChange = (index: number, productId: string) => {
+    const selectedProduct = vendorProducts.find((p: any) => p.product_id === productId);
+    if (selectedProduct) {
+      form.setValue(`items.${index}.unit_price`, 0);
     }
   };
 
-  /* -------- Balance -------- */
-  const balance = useMemo(() => {
-    return Math.max(debit - credit, 0);
-  }, [debit, credit]);
-
-  /* -------- Days Remaining -------- */
   const daysRemaining = useMemo(() => {
-    if (!selectedPurchase || !dueDate) return null;
+    const receiptDate = form.watch("receipt_date");
+    const dueDate = form.watch("payment_duedate");
 
+    if (!receiptDate || !dueDate) return null;
 
-    const created = new Date(selectedPurchase.purchase_date);
+    const created = new Date(receiptDate);
     const due = new Date(dueDate);
-
     const diffTime = due.getTime() - created.getTime();
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  }, [selectedPurchase, dueDate]);
+  }, [form.watch("receipt_date"), form.watch("payment_duedate")]);
 
-  /* -------- Days Style -------- */
   const getDaysRemainingStyle = (days: number | null) => {
     if (days === null) return "";
     if (days < 0) return "text-red-600 font-semibold";
@@ -149,316 +123,521 @@ export default function LedgerFromPurchase({
     return "text-green-600";
   };
 
-  /* -------- Submit -------- */
-  const onSubmit = (data: LedgerFromPurchaseValues) => {
-    if (!selectedPurchase) {
-      setError("Please select a purchase order");
-      toast.error("Please select a purchase order");
+  const onSubmit = (data: any) => {
+    // Validate vendor
+    const vendorId = Number(data.vendor_id);
+    if (!vendorId || isNaN(vendorId) || vendorId <= 0) {
+      toast.error("Please select a valid vendor");
       return;
     }
 
-    console.log("🔍 Selected Purchase:", selectedPurchase);
-    console.log("🔍 vendor_id type:", typeof selectedPurchase.vendor_id);
-    console.log("🔍 vendor_id value:", selectedPurchase.vendor_id);
+    // Validate receipt number
+    if (!data.receipt_number || data.receipt_number.trim() === "") {
+      toast.error("Receipt number is required");
+      return;
+    }
 
-    // 确定支付状态
-    const paymentStatus =
-      data.credit === 0
-        ? "unpaid"
-        : data.credit < data.debit
-        ? "partial"
-        : "paid";
+    // Validate receipt date
+    if (!data.receipt_date || data.receipt_date.trim() === "") {
+      toast.error("Receipt date is required");
+      return;
+    }
+
+    // Validate items
+    if (!data.items || data.items.length === 0) {
+      toast.error("At least one item is required");
+      return;
+    }
+
+    for (const item of data.items) {
+      if (Number(item.quantity || 0) < 1) {
+        toast.error("Quantity must be at least 1");
+        return;
+      }
+      if (Number(item.unit_price || 0) < 0.01) {
+        toast.error("Unit price must be greater than 0");
+        return;
+      }
+    }
+
+    // Validate amounts
+    if (amountPaid > total) {
+      toast.error("Amount Paid cannot exceed Total Amount");
+      return;
+    }
 
     const ledgerPayload = {
-      vendor_id: Number(selectedPurchase.vendor_id), // 确保是数字
+      vendor_id: vendorId,
       source_type: "purchase",
       product_id: null,
-      debit: Number(data.debit),
-      credit: Number(data.credit),
-      note: data.note || `From Purchase Order: ${selectedPurchase.po_number}`,
-      created_at: selectedPurchase.purchase_date,
+      debit: subtotal,
+      credit: amountPaid,
+      note: data.note || `Receipt: ${data.receipt_number}`,
+      created_at: data.receipt_date,
       payment_duedate: data.payment_duedate || null,
-      payment_status: paymentStatus,
+      payment_status: data.payment_status,
+      items: data.items.map((item: any) => ({
+        product_id: item.product_id || null,
+        quantity: Number(item.quantity),
+        unit_price: Number(item.unit_price),
+      })),
     };
-
-    console.log("📝 Creating ledger with payload:", ledgerPayload);
 
     startTransition(async () => {
       try {
-        const result = await createLedger(ledgerPayload);
-
-        console.log("✅ Ledger created:", result);
-
-        toast.success("Ledger entry created successfully!");
+        await createLedger(ledgerPayload);
+        toast.success("Receipt created successfully!");
         form.reset();
-        setSelectedPurchaseId(null);
-        setError(null);
+        setSelectedVendorId(null);
         setOpen(false);
-        onLedgerAdded?.();
-        onSuccess?.();
+        onReceiptAdded?.();
       } catch (e: any) {
-        console.error("❌ Error creating ledger:", e);
-        const errorMsg = e.message || "Unknown error";
-        setError(errorMsg);
-        toast.error("Failed to create ledger", {
-          description: errorMsg,
+        toast.error("Failed to create receipt", {
+          description: e.message || "Unknown error",
         });
       }
     });
   };
 
-  const isLoading = poLoading;
+  const isDataLoading = vendorsLoading;
 
-  /* ================= UI ================= */
+  if (isDataLoading) {
+    return (
+      <Button className="bg-amber-50 border-2 border-yellow-400 text-amber-700 hover:bg-yellow-100 font-medium" disabled>
+        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+        Loading...
+      </Button>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className=" bg-yellow-50 border-2 border-yellow-400 text-yellow-700 hover:bg-amber-400 hover:border-yellow-400 font-medium transition-colors">
+        <Button className={btnStyle}>
           <Plus className="h-4 w-4 mr-2" />
-          Create Ledger from PO
+          Create Receipt
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Create Ledger from Purchase Order</DialogTitle>
+      <DialogContent className="w-[95vw] max-w-5xl max-h-[95vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
+          <div className="flex items-center gap-2">
+            <Receipt className="h-6 w-6 text-amber-600" />
+            <DialogTitle>Create Receipt</DialogTitle>
+          </div>
         </DialogHeader>
 
-        {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm">
-              <p className="font-semibold text-red-900">Error</p>
-              <p className="text-red-800 mt-1">{error}</p>
-            </div>
-          </div>
-        )}
-
-Jade peakz, [9/1/26 14:47 ]
-
-
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-            <span className="ml-2 text-gray-600">Loading purchase orders...</span>
-          </div>
-        ) : purchaseOrders.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-600">No purchase orders available</p>
-          </div>
-        ) : (
+        <div className="flex-1 overflow-y-auto px-6 py-6">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              {/* Purchase Order Selection */}
-              <FormField
-                control={form.control}
-                name="purchase_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Purchase Order *</FormLabel>
-                    <Select
-                      onValueChange={handlePurchaseChange}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a purchase order" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {purchaseOrders.map((po) => (
-                          <SelectItem key={po.purchase_id} value={po.purchase_id}>
-                            {po.po_number} - {po.vendor_name} ($
-                            {po.total_amount.toFixed(2)})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Purchase Details */}
-              {selectedPurchase && (
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm space-y-3">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <p className="text-gray-600 text-xs font-medium">PO Number</p>
-                      <p className="font-semibold text-gray-900">
-                        {selectedPurchase.po_number}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-medium">Vendor ID</p>
-                      <p className="font-semibold text-gray-900">
-                        {selectedPurchase.vendor_id}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-medium">Vendor Name</p>
-                      <p className="font-semibold text-gray-900">
-                        {selectedPurchase.vendor_name}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-medium">Total Amount</p>
-                      <p className="font-semibold text-blue-600">
-                        ${selectedPurchase.total_amount.toFixed(2)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-gray-600 text-xs font-medium">Purchase Date</p>
-                      <p className="font-semibold text-gray-900">
-                        {new Date(selectedPurchase.purchase_date).toLocaleDateString(
-                          "en-US"
-                        )}
-                      </p>
-                    </div>
-                    {selectedPurchase.expected_delivery_date && (
-                      <div>
-                        <p className="text-gray-600 text-xs font-medium">
-                          Expected Delivery
-                        </p>
-                        <p className="font-semibold text-gray-900">
-                          {new Date(
-                            selectedPurchase.expected_delivery_date
-                          ).toLocaleDateString("en-US")}
-                        </p>
-                      </div>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* 1. Receipt Information */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-gray-900">Receipt Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg border">
+                  <FormField
+                    control={form.control}
+                    name="receipt_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm">Receipt Number *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g., RCP-2024-001" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
                     )}
+                  />
 
-Jade peakz, [9/1/26 14:47 ]
 
-                  </div>
+                  <FormField
+                    control={form.control}
+                    name="receipt_date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm">Receipt Date *</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="vendor_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm">Vendor *</FormLabel>
+                        <Select
+                          onValueChange={(v) => {
+                            const numVal = Number(v);
+                            field.onChange(v);
+                            setSelectedVendorId(numVal);
+                          }}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select vendor" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {vendors?.length > 0 ? (
+                              vendors.map((vendor: any) => (
+                                <SelectItem
+                                  key={vendor.vendor_id}
+                                  value={vendor.vendor_id.toString()}
+                                >
+                                  {vendor.vendor_name}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <div className="p-2 text-sm text-gray-500">
+                                No vendors found
+                              </div>
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
-              )}
-
-              {/* Debit (Total Amount) */}
-              <FormField
-                control={form.control}
-                name="debit"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Total Amount *</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        placeholder="0.00"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Credit (Amount Paid) */}
-              <FormField
-                control={form.control}
-                name="credit"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Amount Paid </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        placeholder="0.00"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Due Date */}
-              <FormField
-                control={form.control}
-                name="payment_duedate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Payment Due Date</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Days Remaining */}
-              {daysRemaining !== null && (
-                <div className="p-3 bg-gray-50 border border-gray-200 rounded-md text-sm flex justify-between">
-                  <span className="text-gray-600">Days Remaining:</span>
-                  <span className={getDaysRemainingStyle(daysRemaining)}>
-                    {daysRemaining} days
-                  </span>
-                </div>
-              )}
-
-              {/* Balance */}
-              <div className="p-3 bg-slate-100 rounded-md border border-slate-300 text-sm flex justify-between">
-                <span className="text-gray-700 font-medium">
-                  Remaining Balance :
-                </span>
-                <span
-                  className={`font-bold text-lg ${
-                    balance > 0 ? "text-red-600" : "text-green-600"
-                  }`}
-                >
-                  ${balance.toFixed(2)}
-                </span>
               </div>
 
-              {/* Note */}
-              <FormField
-                control={form.control}
-                name="note"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Note</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        {...field}
-                        placeholder="Add any notes about this ledger entry..."
-                        rows={2}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* 2. Receipt Items */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-gray-900">Receipt Items</h3>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      append({
+                        product_id: "",
+                        quantity: 1,
+                        unit_price: 0,
+                      })
+                    }
+                    className="bg-yellow-50 border-2 border-yellow-400 text-yellow-700 hover:bg-yellow-100 text-xs"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Item
+                  </Button>
+                </div>
 
 
-              <div className="flex gap-2 pt-4">
-                 <Button
-                  type="submit"
-                  className="flex-1 bg-yellow-50 border-2 border-yellow-400 text-yellow-700 hover:bg-amber-400 hover:border-yellow-400 font-medium transition-colors"
-                  disabled={isPending || !selectedPurchase}
-                >
-                  {isPending && (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+
+                <div className="space-y-3 p-4 bg-gray-50 rounded-lg border">
+                  {fields.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500 text-sm">
+                      No items added yet
+                    </div>
+                  ) : (
+                    fields.map((field, index) => (
+                      <div
+                        key={field.id}
+                        className="p-4 bg-white rounded-lg border space-y-3"
+                      >
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {/* 产品选择 */}
+                          {selectedVendorId ? (
+                            <>
+                              {productsLoading ? (
+                                <div className="p-2 bg-blue-50 rounded border border-blue-200">
+                                  <p className="text-xs text-blue-600 font-medium">
+                                    ⏳ Loading products...
+                                  </p>
+                                </div>
+                              ) : vendorProducts.length > 0 ? (
+                                <FormField
+                                  control={form.control}
+                                  name={`items.${index}.product_id`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel className="text-xs">Product *</FormLabel>
+                                      <Select
+                                        onValueChange={(v) => {
+                                          field.onChange(v || "");
+                                          handleProductChange(index, v);
+                                        }}
+                                        value={field.value || ""}
+                                      >
+                                        <FormControl>
+                                          <SelectTrigger className="h-9 text-sm">
+                                            <SelectValue placeholder="Select" />
+                                          </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                          {vendorProducts.map((product: any) => (
+                                            <SelectItem
+                                              key={product.product_id}
+                                              value={product.product_id}
+                                            >
+                                              {product.product_name} ({product.sku_code})
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              ) : (
+                                <div className="p-2 bg-red-50 rounded border border-red-200">
+                                  <p className="text-xs text-red-600 font-medium">
+                                    ❌ No products found
+                                  </p>
+                                  <p className="text-xs text-red-500 mt-1">
+                                    This vendor has no associated products
+                                  </p>
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <div className="p-2 bg-yellow-50 rounded border border-yellow-200">
+                              <p className="text-xs text-yellow-700 font-medium">
+                                ⚠️ Please select a vendor first
+                              </p>
+                            </div>
+                          )}
+
+
+
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.quantity`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs">Qty *</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    step="1"
+                                    className="h-9 text-sm"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.unit_price`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs">Price *</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    min="0.01"
+                                    className="h-9 text-sm"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between pt-2 border-t">
+                          <span className="text-xs text-gray-600">
+                            Total: $
+                            {(
+                              (form.watch(`items.${index}.quantity`) || 0) *
+                              (form.watch(`items.${index}.unit_price`) || 0)
+                            ).toFixed(2)}
+                          </span>
+                          {fields.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => remove(index)}
+                              className="text-red-600 hover:text-red-700 h-8"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))
                   )}
-                  {isPending ? "Creating..." : "Create Ledger Entry"}
-                </Button>
-                 <Button  
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setOpen(false);
-                    setError(null);
-                  }}
-                >
-                  Cancel
-                </Button>
+                </div>
+              </div>
+
+              {/* 3. Payment Information */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-gray-900">Payment Information</h3>
+
+                <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200 space-y-3">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center p-3 bg-white rounded border border-blue-100">
+                      <p className="text-xs text-gray-600 font-medium mb-1">Total</p>
+                      <p className="text-lg font-bold text-gray-900">
+                        ${total.toFixed(2)}
+                      </p>
+                      <p className="text-xs text-gray-500">Total Amount</p>
+                    </div>
+
+
+
+                    <div className="text-center p-3 bg-white rounded border border-emerald-100">
+                      <p className="text-xs text-gray-600 font-medium mb-1">
+                        Credit
+                      </p>
+                      <p className="text-lg font-bold text-emerald-600">
+                        ${amountPaid.toFixed(2)}
+                      </p>
+                      <p className="text-xs text-gray-500">Amount Paid</p>
+                    </div>
+
+                    <div className="text-center p-3 bg-white rounded border border-orange-100">
+                      <p className="text-xs text-gray-600 font-medium mb-1">
+                        Debit
+                      </p>
+                      <p
+                        className={`text-lg font-bold ${
+                          remaining > 0 ? "text-orange-600" : "text-emerald-600"
+                        }`}
+                      >
+                        ${remaining.toFixed(2)}
+                      </p>
+                      <p className="text-xs text-gray-500">Remaining</p>
+                    </div>
+                  </div>
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="amount_paid"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Amount Paid</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max={total}
+                          placeholder="0.00"
+                          {...field}
+                        />
+                      </FormControl>
+                      <p className="text-xs text-gray-500">
+                        Max: ${total.toFixed(2)}
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="payment_duedate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Payment Due Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {daysRemaining !== null && (
+                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-md text-sm flex justify-between items-center">
+                    <span className="text-gray-600 font-medium">Days Remaining:</span>
+                    <span className={getDaysRemainingStyle(daysRemaining)}>
+                      {daysRemaining} days
+                    </span>
+                  </div>
+                )}
+
+                <FormField
+                  control={form.control}
+                  name="payment_status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Payment Status</FormLabel>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="partial">Partial</SelectItem>
+                          <SelectItem value="paid">Paid</SelectItem>
+                          <SelectItem value="refunded">Refunded</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+
+
+              {/* 4. Notes */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-gray-900">Additional Information</h3>
+                <FormField
+                  control={form.control}
+                  name="note"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Notes</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Add notes..."
+                          rows={2}
+                          className="text-sm resize-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             </form>
           </Form>
-        )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-2 px-6 py-4 border-t bg-gray-50 shrink-0">
+          <Button
+            type="submit"
+            onClick={() => form.handleSubmit(onSubmit)()}
+            className="flex-1 bg-green-50 border-2 border-green-400 text-green-700 hover:bg-green-100 font-medium"
+            disabled={isPending || !selectedVendorId}
+          >
+            {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            {isPending ? "Creating..." : "Create Receipt"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setOpen(false);
+              form.reset();
+              setSelectedVendorId(null);
+            }}
+          >
+            Cancel
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

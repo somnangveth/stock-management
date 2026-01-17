@@ -14,19 +14,6 @@ export async function updateMinMaxStock(
     const supabase = await createSupabaseAdmin();
 
     try{
-        const {data: minMaxProductData, error: minMaxProductError} = await supabase
-        .from("products")
-        .update({
-            min_stock_level: data.min_stock_level,
-            max_stock_level: data.max_stock_level,
-        })
-        .eq('product_id', product_id);
-
-        if(minMaxProductError){
-            console.error("Failed to stock level in product table", minMaxProductData);
-            throw new Error(`Error updating in product table ${minMaxProductError.message}`);
-        }
-
         const {data: minMaxStockData, error: minMaxStockError} = await supabase
         .from("stock_alert")
         .update({
@@ -41,7 +28,6 @@ export async function updateMinMaxStock(
         }
 
         return{
-            minMaxProductData,
             minMaxStockData,
         }
 

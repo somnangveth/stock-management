@@ -13,7 +13,7 @@ export default function POSPage(){
         <div>
             <div>
                 <button
-                onClick={() => router.back()}
+                onClick={() => router.push('/staff/salesb2c')}
                 className="flex items-center gap-2">
                     <ArrowLeft/>
                     Back to main page

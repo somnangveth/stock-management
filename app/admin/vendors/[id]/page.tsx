@@ -1,7 +1,9 @@
+
+// 文件路径：app/admin/vendors/[id]/page.tsx
+
 import { notFound } from "next/navigation";
 import VendorDetailCatalog from "@/app/components/catalog/vendordetailcatalog.tsx";
 import { createSupabaseAdmin } from "@/lib/supbase/action";
-import { Edit } from "lucide-react";
 import { Product } from "@/type/producttype";
 
 interface PageProps {
@@ -9,45 +11,24 @@ interface PageProps {
     id: string;
   }>;
 }
-export interface VendorProduct {
-  product_id: number;
-  product_name: string;
-  sku_code: string;
-  description: string;
-  vendor_id: number;
-  unit_price: number;
-  product_image: string | null;
-  quantity_remaining: number;
-
-  category_id: number | null;
-  subcategory_id: number | null;
-
-  min_stock_level: number;
-  reorder_point: number;
-
-  created_at: string;
-  updated_at: string;
-
-  is_active: boolean;
-  barcode: string | null;
-
-  /** Derived field (not from DB) */
-  basePrice: number;
-}
-
 
 export default async function VendorDetailPage({ params }: PageProps) {
   try {
     const { id } = await params;
+    console.log("📍 VendorDetailPage - Vendor ID:", id);
+
     const vendorId = parseInt(id, 10);
 
     if (!id || isNaN(vendorId)) {
+      console.error("❌ Invalid ID");
       notFound();
     }
 
     const supabase = await createSupabaseAdmin();
+    console.log("✅ Supabase client created");
 
     // ===== 1. 获取供应商 =====
+    console.log("🔍 Fetching vendor with ID:", vendorId);
     const { data: vendor, error: vendorError } = await supabase
       .from("vendors")
       .select("*")
@@ -55,78 +36,94 @@ export default async function VendorDetailPage({ params }: PageProps) {
       .single();
 
     if (vendorError || !vendor) {
+      console.error("❌ Vendor not found:", vendorError);
       notFound();
     }
 
-    // ===== 2. 获取产品及其最新的 base price =====
-    // 从 purchase_items 获取最新的 unit_price (base price)
-    const { data: products = [], error: productsError } = await supabase
-      .from("products")
-      .select(`
-        product_id,
-        sku_code,
-        product_name,
-        product_image,
-        max_stock_level,
-        vendor_id,
-        description
-      `)
-      .eq("vendor_id", vendorId)
-      .order("product_name", { ascending: true });
+    console.log("✅ Vendor Found:", vendor.vendor_name);
 
-    if (productsError) {
-      console.error(" Error Searching Product:", productsError);
+    // ===== 2. 获取 product_vendor 关联 =====
+    console.log("🔍 Fetching product_vendor associations for vendor:", vendorId);
+    
+    const { data: productVendorList, error: pvError } = await supabase
+      .from("product_vendor")
+      .select("product_id")
+      .eq("vendor_id", vendorId);
+
+    console.log("Product_vendor Error:", pvError);
+    console.log("Product_vendor Data:", productVendorList);
+    console.log("Found", productVendorList?.length || 0, "product associations");
+
+    if (pvError) {
+      console.error("❌ Product_vendor Query Error:", pvError);
     }
 
-    // ===== 3. 为每个产品获取最新的 base price =====
-    // 从 purchase_items 中找到最新的 unit_price
-    const productsWithPrice = await Promise.all(
-      (products || []).map(async (p: any) => {
-        const { data: latestPrice } = await supabase
-          .from("purchase_items")
-          .select("unit_price, created_at")
-          .eq("product_id", p.product_id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single();
+    // ===== 3. 获取这些产品的详细信息 =====
+    let formattedProducts: Product[] = [];
 
-        return {
-          ...p,
-          basePrice: latestPrice ? Number(latestPrice.unit_price) || 0 : 0,
-        };
-      })
-    );
+    if (productVendorList && productVendorList.length > 0) {
+      const productIds = productVendorList.map((pv: any) => pv.product_id);
+      console.log("🔍 Fetching product details for IDs:", productIds);
 
-    console.log("✅ Product Found:", (products || []).length, "cases");
-    console.log("✅ Products with Price", productsWithPrice.length, "cases");
+      const { data: products, error: productsError } = await supabase
+        .from("products")
+        .select("*")
+        .in("product_id", productIds)
+        .order("product_name", { ascending: true });
+
+      console.log("Products Error:", productsError);
+      console.log("Products Data:", products);
+      console.log("Found", products?.length || 0, "products");
+
+      if (productsError) {
+        console.error("❌ Products Query Error:", productsError);
+      }
+
+      // 格式化产品数据
+      formattedProducts = (products || []).map((p: any) => ({
+        product_id: p.product_id,
+        sku_code: p.sku_code || "N/A",
+        product_name: p.product_name || "Unknown",
+        product_image: p.product_image || null,
+        description: p.description || "",
+        slug: p.slug || "",
+        category_id: p.category_id || "0",
+        subcategory_id: 0,
+        vendor_id: vendorId,
+        min_stock_level: 0,
+        max_stock_level: 0,
+        default_shelf_life_days: 0,
+        base_unit: "unit",
+        units_per_package: p.units_per_package || 1,
+        package_type: p.package_type || "box",
+        track_expiry: false,
+        is_active: true,
+        created_at: p.created_at || new Date().toISOString(),
+        updated_at: p.updated_at || new Date().toISOString(),
+        created_by: p.created_by || null,
+        unit_price: 0,
+        basePrice: 0,
+        total_price: 0,
+        discount_price: 0,
+        tax_amount: 0,
+        quantity_remaining: 0,
+        product_location: p.product_location || null,
+      } as unknown as Product));
+    }
+
+    console.log("✅ Formatted Products:", formattedProducts.length);
 
     // ===== 4. 获取账目 =====
-    const { data: ledger = [] } = await supabase
+    console.log("🔍 Fetching ledger");
+    const { data: ledger = [], error: ledgerError } = await supabase
       .from("ledger")
       .select("*")
       .eq("vendor_id", vendorId)
       .order("created_at", { ascending: false });
 
-    // ===== 格式化产品数据 =====
-    const formattedProducts = (productsWithPrice || []).map((p: any) => ({
-      product_id: p.product_id,
-      product_name: p.product_name || "Unknown",
-      sku_code: p.sku_code || "N/A",
-      description: p.description || "",
-      vendor_id: p.vendor_id,
-      unit_price: p.basePrice, 
-      product_image: p.product_image || null,
-      quantity_remaining: p.quantity_remaining || 0, 
-      category_id: p.category_id || null,
-      subcategory_id: p.subcategory_id || null,
-      min_stock_level: p.min_stock_level || 0,
-      reorder_point: p.reorder_point || 0,
-      created_at: p.created_at || new Date().toISOString(),
-      updated_at: p.updated_at || new Date().toISOString(),
-      is_active: p.is_active ?? true,
-      barcode: p.barcode || null,
-      basePrice: p.basePrice || 0,
-    }));
+    if (ledgerError) {
+      console.error("⚠️ Ledger Query Error:", ledgerError);
+    }
 
     // 格式化账目数据
     const formattedLedger = (ledger || []).map((l: any, index: number) => ({
@@ -148,6 +145,8 @@ export default async function VendorDetailPage({ params }: PageProps) {
       term_status: l.term_status || "normal",
     }));
 
+    console.log("✅ Formatted Ledger:", formattedLedger.length);
+
     return (
       <VendorDetailCatalog
         vendor={vendor}
@@ -156,7 +155,7 @@ export default async function VendorDetailPage({ params }: PageProps) {
       />
     );
   } catch (error) {
-    console.error("Error:", error);
+    console.error("❌ Unexpected Error:", error);
     notFound();
   }
 }

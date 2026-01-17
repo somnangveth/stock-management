@@ -48,6 +48,11 @@ const items = [
         url: "/staff/categories",
         icon: BsFillDiagram3Fill,
       },
+      {
+        title: "Attribute",
+        url: "/staff/attribute",
+        icon: BsFillDiagram3Fill,
+      }
     ]
   },
   {

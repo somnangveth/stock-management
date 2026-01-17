@@ -46,6 +46,7 @@ export type Product = {
   discount_price: number;
   discount_percent: number;
   tax_amount: number;
+  price_value: number;
 
   //Expiry
   batch_id?: string;
@@ -62,6 +63,8 @@ export type Product = {
 };
 
 export type Price = {
+  batch_id: string;
+  attribute_id: string;
   price_id: string;
   product_id: string;
   product_image: string;
@@ -78,7 +81,8 @@ export type Price = {
   discount_price: number;
   total_price: number;
   total_amount: number;
-  b2b_price: number | null;
+  attribute_value: string;
+  price_value: number;
   created_at: string;
 };
 
@@ -101,6 +105,8 @@ export type Sale = {
 
 // Batch fields (if you need them separately)
 export type ProductBatch = {
+  import_status: string;
+  import_price_id: string;
   batch_id: string;
   batch_number: string;
   product_id: string;
@@ -113,23 +119,10 @@ export type ProductBatch = {
   packages_recieved?: number;
   units_per_package: number;
   cost_price?: number;
-  status?: string; // active / expired / returned
+  status: string; // active / expired / returned
 };
 
 
-//Category Type
-export type Categories = {
-  category_id: string;
-  category_name: string;
-  slug: string;
-}
-
-//Subcategory Type
-export type Subcategories = {
-  subcategory_id: string;
-  subcategory_name: string;
-  category_id: string;
-}
 //Stock Type
 export type Stock = {
   id?: string;
@@ -178,6 +171,7 @@ export type Attribute = {
 product_id: string;
 product_attribute_id: string;
 attribute_id: string;
+module: string;
 attribute_name: string;
 description: string;
 value: string;
@@ -324,4 +318,90 @@ export interface VendorProduct {
   is_active: boolean;
   barcode: string | null;
   basePrice: number;
+}
+
+
+export interface Categories {
+  category_id: number;
+  category_name: string;
+  parent_id: string | null;
+  created_at?: string;
+  updated_at?: string;
+  children?: Categories[];
+  level?: number;
+  path?: string;
+}
+
+// Build nested tree structure
+export function buildCategoryTree(categories: Categories[]): Categories[] {
+  const categoryMap = new Map<string, Categories>();
+  const roots: Categories[] = [];
+
+  // First pass: create map and initialize children arrays
+  categories.forEach(cat => {
+    categoryMap.set(String(cat.category_id), { ...cat, children: [] });
+  });
+
+  // Second pass: build tree structure
+  categories.forEach(cat => {
+    const category = categoryMap.get(String(cat.category_id))!;
+    
+    if (cat.parent_id === null) {
+      roots.push(category);
+    } else {
+      const parent = categoryMap.get(cat.parent_id);
+      if (parent) {
+        parent.children!.push(category);
+      } else {
+        // Orphaned category (parent doesn't exist), treat as root
+        roots.push(category);
+      }
+    }
+  });
+
+  return roots;
+}
+
+// Flatten tree to list with indentation levels
+export function flattenCategoryTree(
+  categories: Categories[],
+  level: number = 0,
+  parentPath: string = ""
+): Categories[] {
+  const flattened: Categories[] = [];
+
+  categories.forEach(cat => {
+    const path = parentPath ? `${parentPath} > ${cat.category_name}` : cat.category_name;
+    
+    flattened.push({
+      ...cat,
+      level,
+      path,
+    });
+
+    if (cat.children && cat.children.length > 0) {
+      flattened.push(...flattenCategoryTree(cat.children, level + 1, path));
+    }
+  });
+
+  return flattened;
+}
+
+// Get all descendants of a category (for preventing circular references)
+export function getCategoryDescendants(
+  categoryId: string,
+  allCategories: Categories[]
+): string[] {
+  const descendants: string[] = [];
+
+  function collectDescendants(id: string) {
+    const children = allCategories.filter(c => c.parent_id === id);
+    children.forEach(child => {
+      descendants.push(String(child.category_id));
+      collectDescendants(String(child.category_id));
+    });
+  }
+
+  collectDescendants(categoryId);
+  return descendants;
 }

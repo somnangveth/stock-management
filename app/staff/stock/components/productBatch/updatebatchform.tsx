@@ -3,7 +3,6 @@
 import DialogForm from "@/app/components/dialogform";
 import { Button } from "@/components/ui/button";
 import { Product, ProductBatch } from "@/type/producttype";
-import AddBatch from "./addbatch";
 import { edit, EditIconBtn, faPlusCircle } from "@/app/components/ui";
 import UpdateBatch from "./updatebatch";
 

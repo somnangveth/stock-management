@@ -101,7 +101,7 @@ export async function fetchLedgerAlertDetailed() {
         `
         ledger_id,
         vendor_id,
-        vendors:vendor_id (vendor_name),
+        vendors (vendor_name),
         payment_duedate,
         payment_status,
         debit,
@@ -124,8 +124,8 @@ export async function fetchLedgerAlertDetailed() {
       };
     }
 
-    const overdated = [];
-    const dueSoon = [];
+    const overdated: any[] = [];
+    const dueSoon: any[] = [];
 
     for (const item of data ?? []) {
       if (!item.payment_duedate) continue;
@@ -137,10 +137,20 @@ export async function fetchLedgerAlertDetailed() {
 
       if (!isUnpaid) continue;
 
+      // 处理 vendors 数据 - 它可能是数组或对象
+      let vendorName = "Unknown Vendor";
+      if (item.vendors) {
+        if (Array.isArray(item.vendors) && item.vendors.length > 0) {
+          vendorName = item.vendors[0]?.vendor_name || "Unknown Vendor";
+        } else if (typeof item.vendors === "object" && "vendor_name" in item.vendors) {
+          vendorName = (item.vendors as any).vendor_name || "Unknown Vendor";
+        }
+      }
+
       const ledgerItem = {
         ledger_id: item.ledger_id,
         vendor_id: item.vendor_id,
-        vendor_name: item.vendor_id?.vendor_name || "Unknown Vendor",
+        vendor_name: vendorName,
         payment_duedate: item.payment_duedate,
         balance: Number(item.balance ?? debit - credit),
         daysUntilDue: Math.ceil(

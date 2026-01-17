@@ -5,12 +5,12 @@ import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
-import { updateMinMaxStock } from "@/app/functions/admin/stock/stockalert/stockalert";
 import { styledToast } from "@/app/components/toast";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SubmitBtnFull } from "@/app/components/ui";
+import { updateMinMaxStock } from "@/app/functions/staff/stock/stockalert/stockalert";
 
 const UpdateSchema = z.object({
     min_stock_level: z.number().optional(),

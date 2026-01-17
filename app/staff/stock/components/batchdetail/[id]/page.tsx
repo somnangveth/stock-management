@@ -1,15 +1,15 @@
 "use client";
 
 import { 
+  fetchAttribute,
   fetchBatch, 
   fetchExpiredBatch, 
-  fetchPricesB2C, 
+  fetchImportPrice, 
   fetchProducts, 
   fetchStockAlert
 } from "@/app/functions/admin/api/controller";
 import { cn } from "@/lib/utils";
-import { ProductBatch } from "@/type/productbatch";
-import { Price, Product, StockAlert } from "@/type/producttype";
+import { Price, Product, StockAlert, ProductBatch } from "@/type/producttype";
 import { useQueries } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
@@ -38,8 +38,9 @@ export default function BatchDetailPage(){
             { queryKey: ["productsQuery"], queryFn: fetchProducts },
             { queryKey: ["batchesQuery"], queryFn: fetchBatch },
             { queryKey: ["expiredQuery"], queryFn: fetchExpiredBatch },
-            { queryKey: ["priceb2cQuery"], queryFn: fetchPricesB2C },
-            { queryKey: ["stockAlertQuery"], queryFn: fetchStockAlert }
+            { queryKey: ["stockAlertQuery"], queryFn: fetchStockAlert },
+            { queryKey: ["importpriceQuery"], queryFn: fetchImportPrice},
+            { queryKey: ["attributeQuery"], queryFn: fetchAttribute}
         ]
     });
 
@@ -49,8 +50,9 @@ export default function BatchDetailPage(){
     const productData = results[0].data;
     const batchData = results[1].data;
     const expiredData = results[2].data;
-    const priceData = results[3].data;
-    const stockAlertData = results[4].data;
+    const stockAlertData = results[3].data;
+    const importPriceData = results[4].data;
+    const attributeData = results[5].data;
 
     const products = useMemo(() => {
         if (!productData || !id || !Array.isArray(productData)) return null;
@@ -58,8 +60,10 @@ export default function BatchDetailPage(){
     }, [productData, id]);
 
     const batches = useMemo(() => {
-        if (!batchData || !products || !Array.isArray(batchData)) return [];
-        return batchData.filter((b: ProductBatch) => b.product_id === products.product_id);
+      if (!batchData || !products || !Array.isArray(batchData)) return [];
+      return batchData.filter((b: ProductBatch) => 
+        b.product_id === products.product_id && b.import_status === "stock_in"
+      );
     }, [batchData, products]);
 
     const expired = useMemo(() => {
@@ -67,10 +71,25 @@ export default function BatchDetailPage(){
         return expiredData.filter((e: ProductBatch) => e.product_id === products.product_id);
     }, [expiredData, products]);
 
-    const prices = useMemo(() => {
-      if (!priceData || !products || !Array.isArray(priceData)) return null;
-      return priceData.find((p: Price) => p.product_id === products.product_id);
-    }, [priceData, products]);
+    const importPrices = useMemo(() => {
+  if (!importPriceData || !Array.isArray(importPriceData) || !attributeData) return [];
+  
+  // Find the "small" size attribute_id
+  const smallSizeAttribute = attributeData.find(
+    (attr: any) => attr.attribute_name === "small" && attr.module === "size"
+  );
+  
+  // Get all batch_ids for this product
+  const batchIds = batches.map((b: ProductBatch) => b.batch_id);
+  
+  // Filter prices
+  return importPriceData.filter((price: Price) => 
+    price.product_id === products?.product_id && 
+    (batchIds.includes(price.batch_id) || price.batch_id === null) &&
+    price.attribute_id === smallSizeAttribute?.attribute_id // Only "small" size
+  );
+}, [importPriceData, products, batches, attributeData]);
+    console.log('import price: ', importPrices);
 
     const stockAlerts = useMemo(() => {
       if (!stockAlertData || !products || !Array.isArray(stockAlertData)) return null;
@@ -214,7 +233,7 @@ export default function BatchDetailPage(){
                   product={products}
                   batch={b}
                   stockAlert={stockAlerts}
-                  price={prices}
+                  price={importPrices}
                 />
                 <DeleteBatch batch={b} product={products}/>
                 <UpdateBatchForm product={products} batch={b}/>

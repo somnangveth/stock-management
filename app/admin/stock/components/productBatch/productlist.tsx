@@ -3,17 +3,15 @@ import ProductTable from "@/app/components/tables/producttable";
 import { Product } from "@/type/producttype";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useQueries } from "@tanstack/react-query";
-import AddFormBatch from "./addformbatch";
 import { EditIconBtn, view } from "@/app/components/ui";
 import Link from "next/link";
-import { fetchCategoryAndSubcategory, fetchStockAlert } from "@/app/functions/admin/api/controller";
+import { fetchProducts, fetchStockAlert } from "@/app/functions/admin/api/controller";
 
 // Define enhanced product type
 export interface EnhancedProduct extends Product {
-  category_name?: string;
-  subcategory_name?: string;
   batches?: any[];
   alert_type?: string;
+  current_quantity?: number;
 }
 
 export default function ProductList({ 
@@ -36,8 +34,8 @@ export default function ProductList({
   const result = useQueries({
     queries: [
       {
-        queryKey: ["products", refreshKey],
-        queryFn: fetchCategoryAndSubcategory,
+        queryKey: ["productQuery", refreshKey],
+        queryFn: fetchProducts,
       },
       {
         queryKey: ["stockAlertQuery", refreshKey],
@@ -61,31 +59,21 @@ export default function ProductList({
     return map;
   }, [stockAlertData]);
 
-
   useEffect(() => {
     if (!productData) return;
 
-    const categoryMap = new Map(
-      productData.categories.map((cat: { category_id: string; category_name: string; }) => 
-        [cat.category_id, cat.category_name]
-      )
-    );
-    
-    const subcategoryMap = new Map(
-      productData.subcategories.map((sub: { subcategory_id: string; subcategory_name: string; }) => 
-        [sub.subcategory_id, sub.subcategory_name]
-      )
-    );
+    // Check if productData has the expected structure
+    const products = Array.isArray(productData) 
+      ? productData 
+      : productData.product || [];
 
-    const enhancedProducts: EnhancedProduct[] = productData.product.map((product: Product) => {
+    const enhancedProducts: EnhancedProduct[] = products.map((product: Product) => {
       const stockAlert = stockAlertMap.get(product.product_id);
       
       return {
         ...product,
         current_quantity: stockAlert?.current_quantity ?? "-",
         alert_type: stockAlert?.alert_type ?? "-",
-        category_name: categoryMap.get(product.category_id) || 'Unknown',
-        subcategory_name: subcategoryMap.get(product.subcategory_id) || 'Unknown',
       };
     });
 
@@ -94,9 +82,7 @@ export default function ProductList({
     if (onDataLoaded) {
       const searchKeys: (keyof EnhancedProduct)[] = [
         'product_name',
-        'sku_code',
-        'category_name',
-        'subcategory_name'
+        'sku_code'
       ];
       onDataLoaded(enhancedProducts, handleSearchResults, searchKeys);
     }
@@ -141,19 +127,18 @@ export default function ProductList({
           'product_image',
           'product_name',
           'sku-code',  
-          'category_id',
-          "current_quantity",
-          "alert_type",
+          'current_quantity',
+          'alert_type',
           'action'
         ]}
         form={(product) => {
           const p = product as EnhancedProduct;
           return (
             <div className="flex items-center gap-2">
-              <AddFormBatch product={p} />
               <Link 
-              className={EditIconBtn}
-              href={`/admin/stock/components/batchdetail/${p.product_id}`}>
+                className={EditIconBtn}
+                href={`/admin/stock/components/batchdetail/${p.product_id}`}
+              >
                 {view}
               </Link>
             </div>

@@ -1,7 +1,7 @@
 "use client";
 import { CriticalExpiryCatalog, HighExpiryCatalog, MediumExpiryCatalog } from "@/app/components/catalog/expirycatalog";
 import { AdjustmentCatalog, StockMovementCatalog, ReturnCatalog, DamageCatalog } from "@/app/components/catalog/stockmovementcatalog";
-import { fetchBatch, fetchPricesB2C, fetchProducts, fetchStockMovement } from "@/app/functions/admin/api/controller";
+import { fetchBatch,fetchImportPrice,fetchProducts, fetchStockMovement } from "@/app/functions/admin/api/controller";
 import { getExpiredBatches } from "@/app/functions/admin/stock/expiry/expiry";
 import { ExpiryAlert, Product, ProductBatch } from "@/type/producttype";
 import { useQueries } from "@tanstack/react-query";
@@ -41,8 +41,8 @@ export default function ExpiryStockMovementPanel() {
         queryFn: fetchProducts,
       },
       {
-        queryKey: ["priceQuery"],
-        queryFn: fetchPricesB2C,
+        queryKey: ["importPriceQuery"],
+        queryFn: fetchImportPrice
       },
       {
         queryKey: ["stockmovementQuery"],

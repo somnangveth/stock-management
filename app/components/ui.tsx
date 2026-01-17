@@ -13,6 +13,8 @@ import { FaExclamationCircle } from "react-icons/fa";
 import { FaUserGear } from "react-icons/fa6";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { FaTruck } from "react-icons/fa";
+import { FaSignInAlt } from "react-icons/fa";
 
 //============== Icons ==================
 // Edit Pen
@@ -56,6 +58,12 @@ export const userGear = <FaUserGear/>
 
 //Gear Icon
 export const gear = <FaGear/>
+
+//Truck
+export const truck = <FaTruck/>;
+
+//Sign out
+export const stockin = <FaSignInAlt/>
 //=========================================
 
 
@@ -78,7 +86,8 @@ export const ViewIconBtn = "bg-yellow-100 rounded-full text-amber-600 hover:bg-y
 export const DeleteIconBtn = "bg-transparent hover:bg-transparent text-red-500 hover:text-red-700";
 //Completed Button
 export const CompletedBtn = "bg-green-500 text-white px-3 py-1 rounded-lg";
-
+//Text design
+export const text = "text-sm text-gray-500";
 //Back button
 type BackBtnProps = {
   onCancel: string;

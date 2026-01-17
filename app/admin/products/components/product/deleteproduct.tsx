@@ -63,7 +63,7 @@ export default function DeleteProduct({ product }: { product: Product }) {
                 <Button
                     variant="ghost"
                     size="sm"
-                    className={DeleteBtn}
+                    className="bg-transparent hover:bg-transparent text-red-500 hover:bg-red-700"
                 >
                     {trash}
                 </Button>

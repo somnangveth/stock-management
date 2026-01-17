@@ -3,20 +3,19 @@
 import ProductDetailCatalog from "@/app/components/catalog/productdetailcatalog.tsx";
 import {
   fetchAttribute,
-  fetchCategoryAndSubcategory,
-  fetchPricesB2B,
-  fetchPricesB2C,
-  fetchProductAttribute,
+  fetchCategory,
+  fetchImportPrice,
   fetchProducts,
+  fetchProductVendor,
   fetchVendors,
 } from "@/app/functions/admin/api/controller";
 
+import { cn } from "@/lib/utils";
 import {
   Attribute,
   Categories,
   Price,
   Product,
-  Subcategories,
   Vendors,
 } from "@/type/producttype";
 
@@ -25,130 +24,119 @@ import { useParams } from "next/navigation";
 import { useMemo } from "react";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
-export default function ProductDetailPage() {
-  const params = useParams();
-  const id = params.id;
+type ProductVendor = {
+  product_vendor_id: string;
+  product_id: string;
+  vendor_id: number;
+};
 
-  /* -------------------- FETCH ALL DATA -------------------- */
+type ProductAttribute = {
+  attribute_id: string;
+  attribute_name: string;
+  module: string;
+  value: number;
+  price_value: number;
+};
+
+export default function ProductDetailPage() {
+  const { id } = useParams<{ id: string }>();
+
   const result = useQueries({
     queries: [
-      { queryKey: ["category-subcategory"], queryFn: fetchCategoryAndSubcategory },
       { queryKey: ["products"], queryFn: fetchProducts },
+      { queryKey: ["product-vendors"], queryFn: fetchProductVendor },
       { queryKey: ["vendors"], queryFn: fetchVendors },
-      { queryKey: ["price-b2c"], queryFn: fetchPricesB2C },
-      { queryKey: ["price-b2b"], queryFn: fetchPricesB2B },
-      { queryKey: ["product-attribute"], queryFn: fetchProductAttribute },
-      { queryKey: ["attribute"], queryFn: fetchAttribute },
+      { queryKey: ["categories"], queryFn: fetchCategory },
+      { queryKey: ["prices"], queryFn: fetchImportPrice },
+      { queryKey: ["attributes"], queryFn: fetchAttribute },
     ],
   });
 
   const [
-    categorySubcategoryQuery,
     productQuery,
+    productVendorQuery,
     vendorQuery,
-    priceB2CQuery,
-    priceB2BQuery,
-    productAttributeQuery,
+    categoryQuery,
+    priceQuery,
     attributeQuery,
   ] = result;
 
   const isLoading = result.some((q) => q.isLoading);
-  const hasError = result.some((q) => q.isError);
+  const hasError = result.some((q) => q.error);
 
-  // products
-  const product = useMemo<Product | null>(() => {
-    if (!productQuery.data) return null;
-    return productQuery.data.find(
-      (p: Product) => String(p.product_id) === String(id)
+  const products = productQuery.data ?? [];
+  const productVendors: ProductVendor[] = productVendorQuery.data ?? [];
+  const vendors: Vendors[] = vendorQuery.data ?? [];
+  const categories: Categories[] = categoryQuery.data ?? [];
+  const prices: Price[] = priceQuery.data ?? [];
+  const attributes: Attribute[] = attributeQuery.data ?? [];
+
+  /** ✅ PRODUCT */
+  const product = useMemo(() => {
+    return products.find((p: Product) => p.product_id === id);
+  }, [products, id]);
+
+  /** ✅ CATEGORY */
+  const category = useMemo(() => {
+    if (!product || !product.category_id) return null;
+    return categories.find(
+      (c) => c.category_id === product.category_id
     );
-  }, [productQuery.data, id]);
+  }, [categories, product]);
 
-  // Prices
-  const prices = useMemo<Partial<Price>>(() => {
-    if (!product) return {};
-
-    const b2c = priceB2CQuery.data?.find(
-      (p: Price) => p.product_id === product.product_id
+  /** ✅ PRODUCT → VENDORS (MANY-TO-MANY) */
+  const productVendorList = useMemo(() => {
+    if (!product) return [];
+    return productVendors.filter(
+      (pv) => pv.product_id === product.product_id
     );
+  }, [product, productVendors]);
 
-    const b2b = priceB2BQuery.data?.find(
-      (p: Price) => p.product_id === product.product_id
+  const productVendorsResolved = useMemo(() => {
+    if (!productVendorList.length) return [];
+    return vendors.filter((v) =>
+      productVendorList.some(
+        (pv:any) => pv.vendor_id === v.vendor_id
+      )
     );
+  }, [vendors, productVendorList]);
 
-    return {
-      base_price: b2c?.base_price,
-      profit_price: b2c?.profit_price,
-      tax: b2c?.tax,
-      shipping: b2c?.shipping,
-      total_amount: b2c?.total_amount,
-      b2b_price: b2b?.b2b_price,
-    };
-  }, [product, priceB2CQuery.data, priceB2BQuery.data]);
+  /** ✅ ATTRIBUTES (via price table) */
+  const productAttributes = useMemo(() => {
+    if (!product) return [];
 
-  // Display datas
-  const category = useMemo<Categories | null>(() => {
-    if (!product || !categorySubcategoryQuery.data) return null;
-    return categorySubcategoryQuery.data.categories.find(
-      (c: Categories) => Number(c.category_id) === product.category_id
-    );
-  }, [product, categorySubcategoryQuery.data]);
+    return prices
+      .filter((p) => p.product_id === product.product_id)
+      .map((price) => {
+        const attr = attributes.find(
+          (a) => a.attribute_id === price.attribute_id
+        );
+        if (!attr) return null;
 
-  const subcategory = useMemo<Subcategories | null>(() => {
-    if (!product || !categorySubcategoryQuery.data) return null;
-    return categorySubcategoryQuery.data.subcategories.find(
-      (s: Subcategories) => Number(s.subcategory_id) === product.subcategory_id
-    );
-  }, [product, categorySubcategoryQuery.data]);
-
-  const vendor = useMemo<Vendors | null>(() => {
-    if (!product || !vendorQuery.data) return null;
-    return vendorQuery.data.find(
-      (v: Vendors) => Number(v.vendor_id) === product.vendor_id
-    );
-  }, [product, vendorQuery.data]);
-
-
-  const categories = categorySubcategoryQuery.data?.categories ?? [];
-  const subcategories = categorySubcategoryQuery.data?.subcategories ?? [];
-  const vendors = vendorQuery.data ?? [];
-
-  const attributes = useMemo<Attribute[]>(() => {
-    if (!product || !productAttributeQuery.data || !attributeQuery.data) {
-      return [];
-    }
-
-    const productAttributes = productAttributeQuery.data.filter(
-      (pa: any) => pa.product_id === product.product_id
-    );
-
-    return productAttributes.map((pa: any) => {
-      const attribute = attributeQuery.data.find(
-        (a: Attribute) => a.attribute_id === pa.attribute_id
-      );
-
-      return {
-        product_attribute_id: pa.product_attribute_id, // ← FIXED: Include this!
-        attribute_id: pa.attribute_id,
-        attribute_name: attribute?.attribute_name ?? "Unknown",
-        value: pa.value,
-      };
-    });
-  }, [product, productAttributeQuery.data, attributeQuery.data]);
-
-  console.log("Attributes with product_attribute_id:", attributes); // Debug log
+        return {
+          attribute_id: attr.attribute_id,
+          attribute_name: attr.attribute_name,
+          module: attr.module,
+          value: Number(price.attribute_value),
+          price_value: price.price_value,
+        };
+      })
+      .filter((item): item is ProductAttribute => item !== null);
+  }, [product, prices, attributes]);
 
   if (isLoading) {
     return (
-      <div className="h-screen flex items-center justify-center text-gray-500">
-        Loading <AiOutlineLoading3Quarters className="ml-2 animate-spin" />
+      <div className="flex justify-center items-center h-screen text-gray-500">
+        Loading
+        <AiOutlineLoading3Quarters className={cn("animate-spin ml-2")} />
       </div>
     );
   }
 
-  if (hasError || !product || !category || !subcategory || !vendor) {
+  if (hasError || !product || !category) {
     return (
-      <div className="h-screen flex items-center justify-center text-gray-500">
-        Product not found
+      <div className="flex justify-center items-center h-screen text-gray-500">
+        Failed to load product
       </div>
     );
   }
@@ -156,18 +144,11 @@ export default function ProductDetailPage() {
   return (
     <ProductDetailCatalog
       product={product}
-      price={prices as Price}
-      attribute={attributes}
-
-      /* filtered (display) */
-      category={category}
-      subcategory={subcategory}
-      vendor={vendor}
-
-      /* full lists (forms) */
+      vendors={productVendorsResolved}
       categories={categories}
-      subcategories={subcategories}
-      vendors={vendors}
+      attribute={productAttributes}
+      category={category}
+      role="admin"
     />
   );
 }

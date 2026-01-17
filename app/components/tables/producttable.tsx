@@ -18,7 +18,6 @@ type ColumnKey =
   | "product_image"
   | "product_name"
   | "category_id"
-  | "subcategory_id"
   | "base_unit"
 
   | "sale_id"
@@ -28,8 +27,6 @@ type ColumnKey =
   | "status"
 
   | "base_price"
-  | "profit_price"
-  | "tax"
   | "shipping"
   | "discount"
   | "total_price"
@@ -167,6 +164,7 @@ export default function ProductTable({
     }
   };
 
+
   // Handle select all on current page
   const handleSelectAll = (checked: boolean) => {
     const newSelected = new Set(selectedRows);
@@ -202,9 +200,9 @@ export default function ProductTable({
   return (
     <div className="space-y-4">
 
-      <Table className="w-full border border-gray-300 rounded-xl">
+      <Table className="w-full">
         {/* Header */}
-        <TableHeader className="bg-gray-100">
+        <TableHeader>
           <TableRow>
             {columns.includes("select") && (
               <TableHead className="w-12">
@@ -225,13 +223,10 @@ export default function ProductTable({
             {columns.includes("product_image") && <TableHead>Image</TableHead>}
             {columns.includes("product_name") && <TableHead>Name</TableHead>}
             {columns.includes("category_id") && <TableHead className="text-center">Category</TableHead>}
-            {columns.includes("subcategory_id") && <TableHead className="text-center">Subcategory</TableHead>}
             {columns.includes("base_unit") && <TableHead>Unit</TableHead>}
 
             {columns.includes("base_price") && <TableHead>Base Price</TableHead>}
-            {columns.includes("profit_price") && <TableHead>Profit Price</TableHead>}
             {columns.includes("subtotal") && <TableHead>Subtotal</TableHead>}
-            {columns.includes("tax") && <TableHead>Taxes</TableHead>}
             {columns.includes("shipping") && <TableHead>Shipping </TableHead>}
             {columns.includes("discount") && <TableHead>Discount</TableHead>}
             {columns.includes("b2b_price") && <TableHead>B2B Price</TableHead>}
@@ -254,21 +249,15 @@ export default function ProductTable({
             {columns.includes("status") && <TableHead>Status</TableHead>}
 
             {columns.includes("quantity_remaining") && <TableHead>In Stock</TableHead>}
-            {columns.includes("action") && <TableHead>Action</TableHead>}
+            {columns.includes("action") && <TableHead className="text-left">Action</TableHead>}
           </TableRow>
         </TableHeader>
 
-        <TableBody className="bg-white">
+        <TableBody>
           {currentProducts.map((products, index) => (
             <TableRow 
               key={products.sku_code || index}
-              className={
-    selectedRows.has(products.sku_code!) 
-      ? 'bg-blue-100' 
-      : index % 2 === 0 
-        ? 'bg-white' 
-        : 'bg-gray-50'
-  }
+              className="hover:bg-amber-50 transition-colors"
             >
               {columns.includes("select") && (
                 <TableCell>
@@ -312,20 +301,12 @@ export default function ProductTable({
                   </p>
                 </TableCell>
               )}
-              {columns.includes("subcategory_id") && (
-                <TableCell className="text-center">
-                  <p className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-yellow-700 ">
-                    {products.subcategory_name || "—"}
-                  </p>
-                </TableCell>
-              )}
+              
               {columns.includes("base_unit") && <TableCell>{products.base_unit || "—"}</TableCell>}
 
 
               {columns.includes("base_price") && <TableCell>{products.base_price || "0"}</TableCell>}
-              {columns.includes("profit_price") && <TableCell>{products.profit_price || "0"}</TableCell>}
               {columns.includes("subtotal") && <TableCell>{products.subtotal}</TableCell>}
-              {columns.includes("tax") && <TableCell>{products.tax_amount || "0"}</TableCell>}
               {columns.includes("shipping") && <TableCell>{products.shipping || "0"}</TableCell>}
               {columns.includes("discount") && <TableCell>{products.discount_amount || "0"}</TableCell>}
               {columns.includes("b2b_price") && <TableCell>{products.b2b_price || "0"}</TableCell>}
@@ -378,7 +359,7 @@ export default function ProductTable({
                 </TableCell>
               )}
               {columns.includes("action") && (
-                <TableCell>
+                <TableCell className="text-right">
                   {typeof form === "function" ? form(products) : form}
                 </TableCell>
               )}
@@ -388,7 +369,7 @@ export default function ProductTable({
       </Table>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mt-4">
           <div className="text-sm text-gray-600">
             Showing {startIndex + 1} to {Math.min(endIndex, product.length)} of {product.length} products
           </div>
@@ -397,7 +378,7 @@ export default function ProductTable({
             <button
               onClick={goToPreviousPage}
               disabled={currentPage === 1}
-              className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 rounded-lg border border-amber-200 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -409,8 +390,8 @@ export default function ProductTable({
                   onClick={() => goToPage(page)}
                   className={`px-3 py-1 rounded-lg text-sm ${
                     currentPage === page
-                      ? "bg-amber-600 text-white"
-                      : "border border-gray-300 hover:bg-gray-100"
+                      ? "bg-amber-200 text-white"
+                      : "border border-amber-300 hover:bg-amber-100"
                   }`}
                 >
                   {page}
@@ -421,7 +402,7 @@ export default function ProductTable({
             <button
               onClick={goToNextPage}
               disabled={currentPage === totalPages}
-              className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 rounded-lg border border-amber-400 hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

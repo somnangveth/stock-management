@@ -1,7 +1,14 @@
 "use client";
 
-import { Categories, Product, Subcategories } from "@/type/producttype";
+import { Categories, Product} from "@/type/producttype";
 import { circleCross, faMinusCircle, faPlusCircle, trash } from "../ui";
+
+type CartItem = {
+    product: any;
+    quantity: number;
+    totalPrice: number;
+    package_qty: number;
+}
 
 export function ProductCard({
     product,
@@ -10,24 +17,18 @@ export function ProductCard({
     product: Product;
     onAddToCart: (product: Product) => void;
 }) {
+    // Try to get price from multiple possible fields
+    const displayPrice = product.total_price || product.price_value || 0;
+    
+    console.log("ProductCard - Product:", product.product_name, "Price:", displayPrice);
+    
     return (
         <button
             onClick={() => onAddToCart(product)}
             className="relative w-full flex flex-col 
-                       border border-gray-200 rounded-xl 
-                       bg-white shadow-sm hover:shadow-md 
+                       border border-gray-500 bg-white
                        hover:bg-gray-50 transition overflow-hidden"
         >
-            {/* Discount Badge */}
-            {product.discount_price && (
-                <span className="absolute top-2 right-2 
-                                 bg-red-600 text-white 
-                                 text-[10px] font-bold 
-                                 px-2 py-0.5 rounded-full z-10">
-                    -{product.discount_percent}%
-                </span>
-            )}
-
             {/* Image */}
             <img
                 src={product.product_image || "/assets/product_default.jpg"}
@@ -45,30 +46,8 @@ export function ProductCard({
                             {product.product_name}
                         </p>
                         <span className="text-xs text-gray-500">
-                            Qty: {product.current_quantity}
+                            price: ${displayPrice.toFixed(2)}
                         </span>
-                    </div>
-
-                    {/* RIGHT PANEL */}
-                    <div className="flex flex-col items-end shrink-0">
-                        <span className="text-xs text-gray-500">
-                            Pkg: {product.package_qty}
-                        </span>
-
-                        {product.discount_price ? (
-                            <>
-                                <span className="text-sm font-semibold text-green-600">
-                                    ${product.discount_price}
-                                </span>
-                                <span className="text-[11px] text-gray-400 line-through">
-                                    ${product.total_price}
-                                </span>
-                            </>
-                        ) : (
-                            <span className="text-sm font-semibold text-green-600">
-                                ${product.total_price}
-                            </span>
-                        )}
                     </div>
 
                 </div>
@@ -77,14 +56,13 @@ export function ProductCard({
     );
 }
 
-
-
 interface ProductOrderCardProps{
     product: Product;
     quantity: number;
     totalPrice: number;
     onUpdateQuantity: (product_id: string | number, quantity: number) => void;
 }
+
 export function ProductOrderCard({
     product, 
     quantity = 1,
@@ -93,7 +71,7 @@ export function ProductOrderCard({
 }: ProductOrderCardProps) {
     
     const handleClearItem = () => {
-        onUpdateQuantity(product.product_id, quantity = 0);
+        onUpdateQuantity(product.product_id, 0);
     }
 
     const handleMinus = () => {
@@ -109,6 +87,24 @@ export function ProductOrderCard({
         console.log('Current quantity:', quantity);
         onUpdateQuantity(product.product_id, quantity + 1);
     };
+
+    // Calculate quantity breakdown
+    const getQuantityBreakdown = (totalUnits: number) => {
+        const boxes = Math.floor(totalUnits / 24);
+        const remainingAfterBoxes = totalUnits % 24;
+        const packs = Math.floor(remainingAfterBoxes / 12);
+        const units = remainingAfterBoxes % 12;
+
+        const parts = [];
+        if (boxes > 0) parts.push(`${boxes} ${boxes === 1 ? 'box' : 'boxes'}`);
+        if (packs > 0) parts.push(`${packs} ${packs === 1 ? 'pack' : 'packs'}`);
+        if (units > 0) parts.push(`${units} ${units === 1 ? 'unit' : 'units'}`);
+
+        return parts.length > 0 ? parts.join(' + ') : '0 units';
+    };
+
+    // Format quantity display
+    const quantityDisplay = getQuantityBreakdown(quantity);
     
     return (
         <div className="flex gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
@@ -126,8 +122,19 @@ export function ProductOrderCard({
                 />
             )}
             <div className="flex flex-col flex-1 justify-between">
-                <p className="font-medium text-sm">{product.product_name}</p>
-                <div className="flex items-center gap-2">
+                <div>
+                    <p className="font-medium text-sm">{product.product_name}</p>
+                    {/* Quantity Breakdown Display */}
+                    <p className="text-xs text-gray-600 mt-1">
+                        <span className="font-semibold text-amber-700">{quantity}</span> total units
+                        {quantity > 1 && (
+                            <span className="block text-xs text-gray-500 mt-0.5">
+                                ({quantityDisplay})
+                            </span>
+                        )}
+                    </p>
+                </div>
+                <div className="flex items-center gap-2 mt-2">
                     <button
                         type="button"
                         onClick={handleMinus}
@@ -161,6 +168,3 @@ export function ProductOrderCard({
         </div>
     );
 }
-
-
-

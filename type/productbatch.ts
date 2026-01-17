@@ -7,6 +7,7 @@ export type ProductBatch = {
     recieved_date?: Date;
     status: 'active' | 'expired' | 'dispose' | 'returned';
     note?: string;
+    import_status: string;
     product_id: string;
     quantity: number;
     min_stock_level: number;

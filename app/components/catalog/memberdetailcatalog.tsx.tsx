@@ -5,8 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { Product, Vendors } from "@/type/producttype";
 import { Admin, Dealer, Staff } from "@/type/membertype";
-import UpdateDealerForm from "@/app/admin/salesb2b/components/updatedealerform";
-import DeleteDealer from "@/app/admin/salesb2b/components/deletedealer";
 
 /* ================= TYPES ================= */
 
@@ -142,10 +140,6 @@ export default function MemberDetailCatalog({
             </div>
           </div>
           <div className="flex justify-end">
-            <div className="flex items-center">
-            {dealer ? (<UpdateDealerForm dealer={dealer}/>): (<></>)}
-            {dealer ? (<><DeleteDealer dealer={dealer}/></>):(<></>)}
-            </div>
           </div>
           <Divider />
 

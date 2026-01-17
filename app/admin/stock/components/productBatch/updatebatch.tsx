@@ -13,14 +13,13 @@ import { Button } from "@/components/ui/button";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { SubmitBtn, SubmitBtnFull } from "@/app/components/ui";
+import { SubmitBtnFull } from "@/app/components/ui";
 import { styledToast } from "@/app/components/toast";
 
 const UpdateSchema = z.object({
   batch_number: z.string(),
   manufacture_date: z.date(),
   expiry_date: z.date(),
-  cost_price: z.number(),
   recieved_date: z.date(),
   note: z.string(),
   quantity: z.number(),
@@ -28,120 +27,101 @@ const UpdateSchema = z.object({
   units_per_package: z.number(),
 })
 
-export default function UpdateBatch({onSuccess, product, batch}:{onSuccess?: () => void, product: Product, batch: ProductBatch}){
+export default function UpdateBatch({
+  onSuccess, 
+  product, 
+  batch
+}: {
+  onSuccess?: () => void, 
+  product: Product, 
+  batch: ProductBatch
+}) {
   const [isPending, startTransition] = useTransition();
   
-  function onSubmit(data: z.infer<typeof UpdateSchema>){
+  function onSubmit(data: z.infer<typeof UpdateSchema>) {
     startTransition(async() => {
-      try{
-        const res = await updateBatch(String(product.product_id),batch.batch_id, data);
+      try {
+        const res = await updateBatch(String(product.product_id), batch.batch_id, data);
         const parsed = typeof res === 'string' ? JSON.parse(res) : res;
         const result = parsed;
-        if(result.error){
+        
+        if (result.error) {
           styledToast.error("Failed to update batch");
           console.error("Failed to update product batch");
+        } else {
+          styledToast.success("Update batch successfully");
+          console.log('Update batches successfully');
+          document.getElementById('update-batch')?.click();
+          form.reset();
+          window.location.reload();
         }
-        styledToast.success("Update batch successfully");
-        console.log('Update batches successfully');
-        document.getElementById('update-batch')?.click();
-        form.reset();
-        window.location.reload();
-      }catch(error){
+      } catch(error) {
         console.error(JSON.stringify(error));
+        styledToast.error("An error occurred");
       }
     })
   }
 
-  //Styling 
+  // Styling 
   const text = 'text-sm text-gray-500';
-  const grid3 = 'grid grid-cols-3 gap-2';
-  
-  const form = useForm<z.infer<typeof UpdateSchema>> ({
+
+  const form = useForm<z.infer<typeof UpdateSchema>>({
     resolver: zodResolver(UpdateSchema),
     defaultValues: {
-      batch_number: batch.batch_number,
-      cost_price: batch.cost_price,
-      note: batch.note,
-      quantity: batch.quantity,
-      packages_recieved: batch.packages_recieved,
-      units_per_package: batch.units_per_package,
-      manufacture_date: (batch.manufacture_date),
-      expiry_date: batch.expiry_date,
-      recieved_date: batch.received_date,
+      batch_number: batch.batch_number || "",
+      note: batch.note || "",
+      quantity: batch.quantity || 0,
+      packages_recieved: batch.packages_recieved || 0,
+      units_per_package: batch.units_per_package || 0,
+      manufacture_date: batch.manufacture_date ? new Date(batch.manufacture_date) : new Date(),
+      expiry_date: batch.expiry_date ? new Date(batch.expiry_date) : new Date(),
+      recieved_date: batch.received_date ? new Date(batch.received_date) : new Date(),
     }
   });
 
   useEffect(() => {
     const subscription = form.watch((value, {name}) => {
       const quantityFields = ["packages_recieved", "units_per_package"];
-
-      if(quantityFields.includes(name as string)){
+      if (quantityFields.includes(name as string)) {
         const packages = value.packages_recieved || 0;
         const units = value.units_per_package || 0;
         const totalQuantity = packages * units;
-
-        form.setValue('quantity', Math.max(totalQuantity));
+        form.setValue('quantity', totalQuantity);
       }
     });
     return () => subscription.unsubscribe();
   }, [form]);
 
-  return(
+  return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-4">
+        
         <div className="flex gap-2">
           {/* Batch Number */}
-        <FormField
-          control={form.control}
-          name="batch_number"
-          render={({field}) => (
-            <FormItem>
-              <FormLabel className={text}>Batch Number: </FormLabel>
-              <FormControl>
-                <Input
-                  type="text"
-                  {...field}
-                  onChange={(e) => field.onChange(String(e.target.value))}/>
-              </FormControl>
-            </FormItem>
-          )}/>
+          <FormField
+            control={form.control}
+            name="batch_number"
+            render={({field}) => (
+              <FormItem>
+                <FormLabel className={text}>Batch Number: </FormLabel>
+                <FormControl>
+                  <Input
+                    type="text"
+                    {...field}
+                    value={field.value || ""}
+                    onChange={(e) => field.onChange(e.target.value)}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
 
-        {/* Cost Price */}
-        <FormField
-          control={form.control}
-          name="cost_price"
-          render={({field})=>(
-            <FormItem>
-              <FormLabel className={text}>Cost Price: </FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  step="0.01"
-                  {...field}
-                  value={field.value === 0 ? "" : field.value}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if(val === ""){
-                        field.onChange("");
-                        return null;
-                    }
-
-                    const floatVal = parseFloat(val);
-                    if(!isNaN(floatVal) && floatVal > -1){
-                        field.onChange(floatVal);
-                    }else{
-                        field.onChange("")
-                    }
-                  }}/>
-              </FormControl>
-            </FormItem>
-          )}/>
         </div>
-        
-        {/* Manufacture Date & Expiry Date & Recieved Date */}
-        <div className="">
+
+        {/* Manufacture Date & Expiry Date & Received Date */}
+        <div className="space-y-4">
           {/* Manufacture Date */}
           <FormField
             control={form.control}
@@ -180,13 +160,14 @@ export default function UpdateBatch({onSuccess, product, batch}:{onSuccess?: () 
                   </PopoverContent>
                 </Popover>
               </FormItem>
-            )}/>
-          
+            )}
+          />
+
           {/* Expiry Date */}
           <FormField
             control={form.control}
             name="expiry_date"
-            render={({field})=> (
+            render={({field}) => (
               <FormItem className="flex flex-col">
                 <FormLabel className={text}>Expiry Date: </FormLabel>
                 <Popover>
@@ -222,8 +203,8 @@ export default function UpdateBatch({onSuccess, product, batch}:{onSuccess?: () 
               </FormItem>
             )}
           />
-          
-          {/* Recieved Date */}
+
+          {/* Received Date */}
           <FormField
             control={form.control}
             name="recieved_date"
@@ -261,91 +242,95 @@ export default function UpdateBatch({onSuccess, product, batch}:{onSuccess?: () 
                   </PopoverContent>
                 </Popover>
               </FormItem>
-            )}/>
+            )}
+          />
         </div>
-        
-        {/* Quantity & Package Recieved & units_per_package */}
+
+        {/* Quantity & Package Received & units_per_package */}
         <div className="flex gap-2">
-          
-          {/* Package Recieved  */}
+          {/* Package Received */}
           <FormField
             control={form.control}
             name="packages_recieved"
-            render={({field})=> (
+            render={({field}) => (
               <FormItem>
                 <FormLabel className={text}>Packages Received: </FormLabel>
                 <FormControl>
                   <Input
                     type="number"
-                    {...field}
-                    value={field.value}
-                    onChange={(e) => field.onChange(Number(e.target.value))}/>
+                    value={field.value || ""}
+                    onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                  />
                 </FormControl>
               </FormItem>
             )}
           />
-          
+
           {/* Units Per Package */}
           <FormField
             control={form.control}
             name="units_per_package"
-            render={({field})=>(
+            render={({field}) => (
               <FormItem>
                 <FormLabel className={text}>Units per package: </FormLabel>
                 <FormControl>
                   <Input
                     type="number"
-                    {...field}
-                    value={field.value}
-                    onChange={(e) => field.onChange(Number(e.target.value))}/>
+                    value={field.value || ""}
+                    onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                  />
                 </FormControl>
               </FormItem>
-            )}/>
+            )}
+          />
         </div>
 
         {/* Quantity */}
-          <FormField
-            control={form.control}
-            name="quantity"
-            render={({field}) => (
-              <FormItem>
-                <FormLabel className={text}>Quantity: </FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    {...field}
-                    value={field.value}
-                    disabled
-                    className="bg-gray-100"/>
-                </FormControl>
-              </FormItem>
-            )}/>
-        
+        <FormField
+          control={form.control}
+          name="quantity"
+          render={({field}) => (
+            <FormItem>
+              <FormLabel className={text}>Quantity: </FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  value={field.value || 0}
+                  disabled
+                  className="bg-gray-100"
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
         {/* Note */}
         <FormField
           control={form.control}
           name="note"
-          render={({field})=>(
+          render={({field}) => (
             <FormItem>
               <FormLabel className={text}>Note: </FormLabel>
               <FormControl>
                 <Input
                   type="text"
                   {...field}
-                  value={field.value}
-                  onChange={(e) => field.onChange(e.target.value)}/>
+                  value={field.value || ""}
+                  onChange={(e) => field.onChange(e.target.value)}
+                />
               </FormControl>
             </FormItem>
-          )}/>
+          )}
+        />
 
         <div className="flex justify-end">
-        <Button type="submit" disabled={isPending} className={SubmitBtnFull}>
-          {isPending ? (
-            <AiOutlineLoading3Quarters className={cn("animate-spin")}/>
-          ):(
-            <>Add Batch</>
-          )}
-        </Button>
+          <Button type="submit" disabled={isPending} className={SubmitBtnFull}>
+            {isPending ? (
+              <AiOutlineLoading3Quarters className={cn("animate-spin")}/>
+            ) : (
+              <>Update Batch</>
+            )}
+          </Button>
         </div>
       </form>
     </Form>

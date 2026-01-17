@@ -28,8 +28,8 @@ export async function fetchProducts(){
 }
 
 //Fetch Category And Subcategory
-export async function fetchCategoryAndSubcategory(){
-    const res = await fetch('/api/admin/fetchcategoryandsubcategory');
+export async function fetchCategory(){
+    const res = await fetch('/api/admin/fetchcategory');
     if(!res.ok){
         throw new Error("Failed to fetch");
     }
@@ -47,22 +47,22 @@ export async function fetchContact(){
     return res.json();
 }
 
-//Fetch Prices for B2C
-export async function fetchPricesB2C(){
-    const res = await fetch('/api/admin/fetchpricesb2c');
+//Fetch Prices for import price
+export async function fetchImportPrice(){
+    const res = await fetch('/api/admin/fetchimportprice');
     if(!res.ok){
-        throw new Error('Failed to fetch');
+        throw new Error('Failed to fetch import price');
     }
 
     return res.json();
 }
 
-//Fetch Prices for B2B
-export async function fetchPricesB2B(){
-    const res = await fetch('/api/admin/fetchpricesb2b');
+//Fetch Prices for Sale price
+export async function fetchSalePrice(){
+    const res = await fetch('/api/admin/fetchsaleprice');
 
     if(!res.ok){
-        throw new Error("Failed to fetch");
+        throw new Error("Failed to fetch sale price");
     }
 
     return res.json();
@@ -130,17 +130,6 @@ export async function fetchSaleItems(){
 
     return res.json();
 }
-
-//Fetch Discounts
-export async function fetchDiscount(){
-    const res = await fetch("/api/admin/fetchdiscounts");
-    if(!res.ok){
-        console.error("Failed to fetch discounts data");
-    }
-
-    return res.json();
-}
-
 
 //Fetch Attribute
 export async function fetchAttribute(){
@@ -224,3 +213,26 @@ export async function fetchReceiveOrders(){
     }
     return res.json();
 }
+
+
+//Fetch product vendor
+export async function fetchProductVendor(){
+    const res = await fetch("/api/admin/fetchproductvendor");
+    if(!res.ok){
+        console.error("Failed to fetch");
+    }
+
+    return res.json();
+}
+
+//Fetch Sales Stats for Profile Welcome
+export async function fetchSalesStats(){
+    const res = await fetch("/api/admin/fetchsalesstats");
+    if(!res.ok){
+        console.error("Failed to fetch sales stats");
+        throw new Error("Failed to fetch sales stats");
+    }
+
+    return res.json();
+}
+

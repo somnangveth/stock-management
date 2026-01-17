@@ -5,6 +5,7 @@ import DraftReceiptPanel from "./ components/completedpanel";
 import CompletedReceiptPanel from "./ components/draftpanel";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { FaSignal } from "react-icons/fa6";
 
 export default function TrackerPage() {
   const router = useRouter();
@@ -13,7 +14,7 @@ export default function TrackerPage() {
   return (
     <div>
       <button 
-      onClick={() => router.push('/admin/salesb2c')}
+      onClick={() => router.push('/staff/salesb2c')}
       className="flex gap-2 items-center mb-3">
         <ArrowLeft/>
         Back to main page
